@@ -10,13 +10,13 @@ class GedcomStructure:
         self,
         tag: str,
         pointer: str,
-        linestr: str,
+        text: str,
         children: Optional[List["GedcomStructure"]] = None,
     ):
         """Initialize self."""
         self.tag = tag
         self.pointer = pointer
-        self.linestr = linestr
+        self.text = text
         self.children = children or []
         self.parent: Optional["GedcomStructure"] = None
 
@@ -27,6 +27,6 @@ class GedcomStructure:
             repr_children = f"[{len(self.children)} <GedcomStructure>]"
         return (
             "GedcomStructure("
-            f"tag={self.tag}, pointer={self.pointer}, linestr={self.linestr}, "
+            f"tag={self.tag}, pointer={self.pointer}, text={self.text}, "
             f"children={repr_children}"
         )

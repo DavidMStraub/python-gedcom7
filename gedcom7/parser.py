@@ -18,12 +18,12 @@ def loads(string: str) -> List[GedcomStructure]:
         level = int(data["level"])
         # handle continuation lines
         if data["tag"] == const.CONT:
-            context[level - 1].linestr += "\n" + data["linestr"]
+            context[level - 1].text += "\n" + data["linestr"]
             continue
         structure = GedcomStructure(
             tag=ext.get(data["tag"]) or data["tag"],
             pointer=data["pointer"],
-            linestr=data["linestr"],
+            text=data["linestr"],
         )
         # handle extension tags
         if (
@@ -31,7 +31,7 @@ def loads(string: str) -> List[GedcomStructure]:
             and context[0].tag == const.HEAD
             and context[1].tag == const.SCHMA
         ):
-            tag_name, tag_uri = structure.linestr.split(" ")
+            tag_name, tag_uri = structure.text.split(" ")
             ext[tag_name] = tag_uri
         context[level] = structure
         # append structure to output
