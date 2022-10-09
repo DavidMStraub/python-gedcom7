@@ -4,6 +4,8 @@ GEDCOM_MIN = """0 HEAD
 0 TRLR
 """
 
+import pathlib
+
 import gedcom7
 
 
@@ -18,3 +20,8 @@ def test_minimal():
     record = records[1]
     assert record.tag == "TRLR"
     assert len(record.sub) == 0
+
+def test_maximal():
+    filename = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
+    with open(filename, encoding="utf-8") as f:
+        gedcom7.loads(f.read())
