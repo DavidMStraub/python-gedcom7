@@ -14,13 +14,13 @@ def test_minimal():
     assert len(records) == 2
     record = records[0]
     assert record.tag == "HEAD"
-    assert len(record.sub) == 1
-    assert record.sub[0].parent == record
-    assert len(record.sub[0].sub) == 1
-    assert record.sub[0].sub[0].linestr == "7.0"
+    assert len(record.children) == 1
+    assert record.children[0].parent == record
+    assert len(record.children[0].children) == 1
+    assert record.children[0].children[0].linestr == "7.0"
     record = records[1]
     assert record.tag == "TRLR"
-    assert len(record.sub) == 0
+    assert len(record.children) == 0
 
 def test_maximal():
     filename = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
