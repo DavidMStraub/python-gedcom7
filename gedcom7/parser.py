@@ -36,7 +36,9 @@ def loads(string: str) -> List[GedcomStructure]:
         context[level] = structure
         # append structure to output
         if level > 0:
-            context[level - 1].sub.append(structure)
+            parent = context[level - 1]
+            structure.parent = parent
+            parent.sub.append(structure)
         else:
             records.append(structure)
     return records

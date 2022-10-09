@@ -18,6 +18,7 @@ class GedcomStructure:
         self.pointer = pointer
         self.linestr = linestr
         self.sub = sub or []
+        self.parent: Optional["GedcomStructure"] = None
 
     def __repr__(self):
         if len(self.sub) == 0:

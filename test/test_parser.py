@@ -15,6 +15,7 @@ def test_minimal():
     record = records[0]
     assert record.tag == "HEAD"
     assert len(record.sub) == 1
+    assert record.sub[0].parent == record
     assert len(record.sub[0].sub) == 1
     assert record.sub[0].sub[0].linestr == "7.0"
     record = records[1]
