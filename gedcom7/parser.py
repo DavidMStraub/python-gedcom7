@@ -23,6 +23,7 @@ def loads(string: str) -> List[GedcomStructure]:
         structure = GedcomStructure(
             tag=ext.get(data["tag"]) or data["tag"],
             pointer=data["pointer"],
+            xref=data["xref"],
             text=data["linestr"],
         )
         # handle extension tags
