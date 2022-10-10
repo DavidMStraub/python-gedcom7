@@ -36,9 +36,31 @@ class GedcomStructure:
             f"children={repr_children}"
         )
 
+    def _match_type(self, regex, name: str):
+        """Check if content matches type."""
+        match = re.fullmatch(regex, self.text)
+        if not match:
+            raise ValueError(f"Cannot interpret {self.text} as type {name}")
+        return match
+
     def as_list_enum(self) -> List[str]:
         """Return as list enum data type."""
-        match = re.fullmatch(grammar.list_enum, self.text)
-        if not match:
-            raise ValueError(f"Cannot interpret {self.text} as type list enum")
+        self._match_type(grammar.list_enum, "list enum")
         return [el.strip() for el in self.text.split(",")]
+
+    def as_enum(self) -> List[str]:
+        """Return as list enum data type."""
+        self._match_type(grammar.enum, "enum")
+        return self.text
+
+    def as_personal_name(self) -> List[str]:
+        """Return as personal name data type."""
+        match = self._match_type(grammar.personalname, "personal name")
+        full_name = self.text.replace("/", "")
+        surname = match.group("surname")
+        return full_name, surname
+
+    def as_integer(self) -> List[str]:
+        """Return as integer data type."""
+        self._match_type(grammar.integer, "integer")
+        return int(self.text)
