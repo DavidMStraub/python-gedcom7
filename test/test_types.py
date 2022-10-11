@@ -97,7 +97,30 @@ def test_list_text():
     assert T.ListText("foo").parse() == ["foo"]
     assert T.ListText("foo,bar").parse() == ["foo", "bar"]
 
+
 def test_media_type():
     with pytest.raises(ValueError):
         T.MediaType("image")
     assert T.MediaType("image/jpeg").parse() == "image/jpeg"
+
+
+def test_dateexact():
+    with pytest.raises(ValueError):
+        T.DateExact("2022-10-11")
+    with pytest.raises(ValueError):
+        T.DateExact("11 10 2022")
+    assert T.DateExact("11 JAN 2022").parse() == {
+        "year": 2022,
+        "month": "JAN",
+        "day": 11,
+    }
+
+
+def test_dateexact():
+    with pytest.raises(ValueError):
+        T.DatePeriod("11 JAN 2022")
+    assert T.DatePeriod("TO 11 JAN 2022").parse() == {
+        "year": 2022,
+        "month": "JAN",
+        "day": 11,
+    }

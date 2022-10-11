@@ -166,3 +166,19 @@ class MediaType(DataType):
     """Media type type."""
 
     REGEX = grammar.mediatype
+
+
+class DateExact(DataType):
+    """Exact date type."""
+
+    REGEX = grammar.dateexact
+
+    def parse(self) -> Dict[str, int]:
+        """Parse the string."""
+        match = self.match.groupdict()
+        return {
+            "day": int(match["day"]),
+            "month": match["month"],
+            "year": int(match["year"]),
+        }
+
