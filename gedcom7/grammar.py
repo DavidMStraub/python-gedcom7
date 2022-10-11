@@ -6,10 +6,11 @@ months = f'{integer}m'
 weeks = f'{integer}w'
 days = f'{integer}d'
 ageduration = (
-    f'({years}({d}{months})?({d}{weeks})?({d}{days})?|{months}({d}{weeks})?({d}'
-    f'{days})?|{weeks}({d}{days})?|{days})'
+    f'((?P<years>{years})({d}(?P<months1>{months}))?({d}(?P<weeks1>{weeks}))?'
+    f'({d}(?P<days1>{days}))?|(?P<months2>{months})({d}(?P<weeks2>{weeks}))?({d}'
+    f'(?P<days2>{days}))?|(?P<weeks3>{weeks})({d}(?P<days3>{days}))?|(?P<days4>{days}))'
 )
-age = f'({agebound}{d})?{ageduration}'
+age = f'((?P<agebound>{agebound}){d})?{ageduration}'
 anychar = '[\t-\\U0010ffff]'
 atsign = '@'
 banned = (
