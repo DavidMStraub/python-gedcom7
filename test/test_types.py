@@ -115,12 +115,3 @@ def test_dateexact():
         "day": 11,
     }
 
-
-def test_dateexact():
-    with pytest.raises(ValueError):
-        T.DatePeriod("11 JAN 2022")
-    assert T.DatePeriod("TO 11 JAN 2022").parse() == {
-        "year": 2022,
-        "month": "JAN",
-        "day": 11,
-    }
