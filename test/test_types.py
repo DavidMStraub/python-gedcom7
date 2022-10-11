@@ -96,3 +96,8 @@ def test_list_enum():
 def test_list_text():
     assert T.ListText("foo").parse() == ["foo"]
     assert T.ListText("foo,bar").parse() == ["foo", "bar"]
+
+def test_list_text():
+    with pytest.raises(ValueError):
+        T.MediaType("image")
+    assert T.MediaType("image/jpeg").parse() == "image/jpeg"

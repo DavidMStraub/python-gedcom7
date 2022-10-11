@@ -160,3 +160,9 @@ class ListEnum(ListText):
     """List Enum type."""
 
     REGEX = grammar.list_enum
+
+
+class MediaType(DataType):
+    """Media type type."""
+
+    REGEX = grammar.mediatype
