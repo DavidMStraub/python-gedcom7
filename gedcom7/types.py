@@ -58,7 +58,7 @@ class DataType:
         return self.__class__.__name__
 
     def __repr__(self):
-        return f"{self.name}(\"{self.text}\")"
+        return f'{self.name}("{self.text}")'
 
     def _match(self) -> re.Match:
         """Match a string and raise if not compatible."""
@@ -126,20 +126,37 @@ class Age(DataType):
             "years": match["years"],
             "months": match["months1"] or match["months2"],
             "weeks": match["weeks1"] or match["weeks2"] or match["weeks3"],
-            "days": match["days1"] or match["days2"] or match["days3"] or match["days4"],
+            "days": match["days1"]
+            or match["days2"]
+            or match["days3"]
+            or match["days4"],
         }
+
         def f(k, v):
             if k == "agebound":
                 return v
             return int(v[:-1])
+
         return {k: f(k, v) for k, v in res.items() if v is not None}
 
 
-class ListEnum(DataType):
-    """List Enum type."""
+class Enum(DataType):
+    """Enum type."""
 
-    REGEX = grammar.list_enum
+    REGEX = grammar.enum
+
+
+class ListText(DataType):
+    """List Text type."""
+
+    REGEX = grammar.list_text
 
     def parse(self) -> List[str]:
         """Parse the string."""
         return [el.strip() for el in self.text.split(",")]
+
+
+class ListEnum(ListText):
+    """List Enum type."""
+
+    REGEX = grammar.list_enum

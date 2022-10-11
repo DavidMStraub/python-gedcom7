@@ -80,6 +80,19 @@ def test_age():
     assert T.Age("3y 6m 5d").parse() == {"years": 3, "months": 6, "days": 5}
 
 
+def test_enum():
+    with pytest.raises(ValueError):
+        T.Enum("Foo")
+    assert T.Enum("FOO").parse() == "FOO"
+
+
 def test_list_enum():
+    with pytest.raises(ValueError):
+        T.ListEnum("Foo")
     assert T.ListEnum("FOO").parse() == ["FOO"]
     assert T.ListEnum("FOO, BAR").parse() == ["FOO", "BAR"]
+
+
+def test_list_text():
+    assert T.ListText("foo").parse() == ["foo"]
+    assert T.ListText("foo,bar").parse() == ["foo", "bar"]
