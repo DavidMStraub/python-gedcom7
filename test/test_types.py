@@ -13,11 +13,6 @@ def test_integer():
     assert T.Integer("203").parse() == 203
 
 
-def test_as_type():
-    struct = T.GedcomStructure("_SOMETAG", "", "15", "")
-    assert struct.as_type("Integer") == 15
-
-
 def test_personalname():
     assert T.PersonalName("John Doe").parse() == {
         "fullname": "John Doe",
@@ -115,3 +110,174 @@ def test_dateexact():
         "day": 11,
     }
 
+
+def test_date():
+    assert T.Date("JULIAN 11 JAN 2022 BCE").parse() == {
+        "calendar": "JULIAN",
+        "day": 11,
+        "month": "JAN",
+        "year": 2022,
+        "epoch": "BCE",
+    }
+    assert T.DateValue("JULIAN 11 JAN 2022 BCE").parse() == {
+        "calendar": "JULIAN",
+        "day": 11,
+        "month": "JAN",
+        "year": 2022,
+        "epoch": "BCE",
+    }
+
+
+def test_dateperiod():
+    with pytest.raises(ValueError):
+        T.DatePeriod("11 JAN 2022")
+    assert T.DatePeriod("FROM JULIAN 5 MAY 1755 BCE").parse() == {
+        "from": {
+            "calendar": "JULIAN",
+            "year": 1755,
+            "month": "MAY",
+            "day": 5,
+            "epoch": "BCE",
+        },
+    }
+    assert T.DatePeriod("TO 11 JAN 2022").parse() == {
+        "to": {
+            "calendar": None,
+            "year": 2022,
+            "month": "JAN",
+            "day": 11,
+            "epoch": None,
+        },
+    }
+    assert T.DatePeriod("FROM 1 JAN 2021 TO 11 JAN 2022").parse() == {
+        "from": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+        "to": {
+            "calendar": None,
+            "year": 2022,
+            "month": "JAN",
+            "day": 11,
+            "epoch": None,
+        },
+    }
+    assert T.DateValue("FROM 1 JAN 2021 TO 11 JAN 2022").parse() == {
+        "from": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+        "to": {
+            "calendar": None,
+            "year": 2022,
+            "month": "JAN",
+            "day": 11,
+            "epoch": None,
+        },
+    }
+
+
+def test_date_approx():
+    assert T.DateApprox("ABT 5 MAY 1755 BCE").parse() == {
+        "qualifier": "ABT",
+        "date": {
+            "calendar": None,
+            "year": 1755,
+            "month": "MAY",
+            "day": 5,
+            "epoch": "BCE",
+        },
+    }
+    assert T.DateValue("ABT 5 MAY 1755 BCE").parse() == {
+        "qualifier": "ABT",
+        "date": {
+            "calendar": None,
+            "year": 1755,
+            "month": "MAY",
+            "day": 5,
+            "epoch": "BCE",
+        },
+    }
+
+
+def test_date_range_bet():
+    assert T.DateRange("BET 1 JAN 2021 AND 2 FEB 2022").parse() == {
+        "between": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+        "and": {
+            "calendar": None,
+            "year": 2022,
+            "month": "FEB",
+            "day": 2,
+            "epoch": None,
+        },
+    }
+    assert T.DateValue("BET 1 JAN 2021 AND 2 FEB 2022").parse() == {
+        "between": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+        "and": {
+            "calendar": None,
+            "year": 2022,
+            "month": "FEB",
+            "day": 2,
+            "epoch": None,
+        },
+    }
+
+
+def test_date_range_bef():
+    assert T.DateRange("BEF 1 JAN 2021").parse() == {
+        "before": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        }
+    }
+    assert T.DateValue("BEF 1 JAN 2021").parse() == {
+        "before": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        }
+    }
+
+
+def test_date_range_aft():
+    assert T.DateRange("AFT 1 JAN 2021").parse() == {
+        "after": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+    }
+    assert T.DateValue("AFT 1 JAN 2021").parse() == {
+        "after": {
+            "calendar": None,
+            "year": 2021,
+            "month": "JAN",
+            "day": 1,
+            "epoch": None,
+        },
+    }

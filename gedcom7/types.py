@@ -3,6 +3,7 @@
 import re
 from typing import Any, Dict, Optional, List, Union
 
+from . import const
 from . import grammar
 
 
@@ -173,7 +174,7 @@ class DateExact(DataType):
 
     REGEX = grammar.dateexact
 
-    def parse(self) -> Dict[str, int]:
+    def parse(self) -> Dict[str, Union[str, int]]:
         """Parse the string."""
         match = self.match.groupdict()
         return {
@@ -182,3 +183,85 @@ class DateExact(DataType):
             "year": int(match["year"]),
         }
 
+
+class Date(DataType):
+    """Date type."""
+
+    REGEX = grammar.date_capture
+
+    def parse(self) -> Dict[str, Union[str, int]]:
+        """Parse the string."""
+        match = self.match.groupdict()
+        return {
+            "calendar": match["calendar"],
+            "day": int(match["day"]),
+            "month": match["month"],
+            "year": int(match["year"]),
+            "epoch": match["epoch"],
+        }
+
+
+class DatePeriod(DataType):
+    """Date period type."""
+
+    REGEX = grammar.dateperiod
+
+    def parse(self) -> Dict[str, Any]:
+        """Parse the string."""
+        match = self.match.groupdict()
+        res = {}
+        if match["todate1"] or match["todate2"]:
+            res["to"] = Date(match["todate1"] or match["todate2"]).parse()
+        if match["fromdate"]:
+            res["from"] = Date(match["fromdate"]).parse()
+        return res
+
+
+class DateApprox(DataType):
+    """Date approx type."""
+
+    REGEX = grammar.dateapprox
+
+    def parse(self) -> Dict[str, Any]:
+        """Parse the string."""
+        match = self.match.groupdict()
+        match["date"] = Date(match.pop("dateapprox")).parse()
+        return match
+
+
+class DateRange(DataType):
+    """Date range type."""
+
+    REGEX = grammar.daterange
+
+    def parse(self) -> Dict[str, Any]:
+        """Parse the string."""
+        match = self.match.groupdict()
+        return {k: Date(v).parse() for k, v in match.items() if v}
+
+
+class DateValue(DataType):
+    """Date value type."""
+
+    REGEX = grammar.datevalue
+
+    def parse(self) -> Dict[str, Any]:
+        """Parse the string."""
+        if not self.text:
+            return {}
+        try:
+            res = Date(self.text).parse()
+            return res
+        except ValueError:
+            pass
+        try:
+            res = DateRange(self.text).parse()
+            return res
+        except ValueError:
+            pass
+        try:
+            res = DatePeriod(self.text).parse()
+            return res
+        except ValueError:
+            pass
+        return DateApprox(self.text).parse()        
