@@ -281,3 +281,13 @@ def test_date_range_aft():
             "epoch": None,
         },
     }
+
+
+def test_boolean():
+    with pytest.raises(ValueError):
+        T.Integer("N")
+    with pytest.raises(ValueError):
+        T.Integer("y")
+    with pytest.raises(ValueError):
+        T.Integer("")
+    assert T.Boolean("Y").parse() == True

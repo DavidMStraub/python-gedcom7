@@ -37,10 +37,32 @@ class GedcomStructure:
             f"children={repr_children}"
         )
 
+    def _get_type_id(self) -> str:
+        """Get the structure type ID."""
+        if "://" in self.tag:
+            return self.tag
+        if self.parent is None:
+            if self.tag == const.HEAD:
+                return "HEAD pseudostructure"
+            if self.tag == const.TRLR:
+                return "TRLR pseudostructure"
+            return const.substructures[""][self.tag]
+        return const.substructures[self.parent._get_type_id()][self.tag]
+
     def as_type(self, dtype: str):
         """Return as data type."""
         dtype_cls = globals()[dtype]
         return dtype_cls(self.text).parse()
+
+    @property
+    def data(self) -> Optional["DataType"]:
+        """Return data in the correct type."""
+        if not self.text:
+            return None
+        type_id = self._get_type_id()
+        payload = const.payloads.get(type_id)
+        dtype = dtypes.get(payload) or Text
+        return dtype(self.text)
 
 
 class DataType:
@@ -73,6 +95,12 @@ class DataType:
         return self.text
 
 
+class Text(DataType):
+    """Text type."""
+
+    REGEX = grammar.text
+
+
 class Integer(DataType):
     """Integer type."""
 
@@ -81,6 +109,18 @@ class Integer(DataType):
     def parse(self):
         """Parse the string."""
         return int(self.text)
+
+
+class Boolean(DataType):
+    """Boolean type."""
+
+    REGEX = grammar.boolean
+
+    def parse(self):
+        """Parse the string."""
+        if self.text:
+            return True
+        return False
 
 
 class PersonalName(DataType):
@@ -264,4 +304,22 @@ class DateValue(DataType):
             return res
         except ValueError:
             pass
-        return DateApprox(self.text).parse()        
+        return DateApprox(self.text).parse()
+
+
+dtypes = {
+    "Y|<NULL>": Boolean,
+    "http://www.w3.org/2001/XMLSchema#Language": Text,
+    "http://www.w3.org/2001/XMLSchema#nonNegativeInteger": Integer,
+    "http://www.w3.org/2001/XMLSchema#string": Text,
+    "http://www.w3.org/ns/dcat#mediaType": MediaType,
+    "https://gedcom.io/terms/v7/type-Age": Age,
+    "https://gedcom.io/terms/v7/type-Date": DateValue,
+    "https://gedcom.io/terms/v7/type-Date#exact": DateExact,
+    "https://gedcom.io/terms/v7/type-Date#period": DatePeriod,
+    "https://gedcom.io/terms/v7/type-Enum": Enum,
+    "https://gedcom.io/terms/v7/type-List#Enum": ListEnum,
+    "https://gedcom.io/terms/v7/type-List#Text": ListText,
+    "https://gedcom.io/terms/v7/type-Name": PersonalName,
+    "https://gedcom.io/terms/v7/type-Time": Time,
+}

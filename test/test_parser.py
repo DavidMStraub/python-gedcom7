@@ -12,11 +12,6 @@ GEDCOM_EXTTAG = """0 HEAD
 0 @I1@ INDI
 1 ALIA @I2@
 1 _FOO 23
-0 @I2@ INDI
-1 NAME
-2 PART Tom Jones
-1 ASSO @I1@
-2 TYPE GODP
 0 TRLR
 """
 
@@ -45,5 +40,5 @@ def test_maximal():
 
 def test_exttag():
     records = gedcom7.loads(GEDCOM_EXTTAG)
-    assert len(records) == 4
+    assert len(records) == 3
     assert records[1].children[1].tag == "http://example.com/placeholder"
