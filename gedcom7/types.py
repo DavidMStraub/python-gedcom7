@@ -234,7 +234,7 @@ class Date(DataType):
         match = self.match.groupdict()
         return {
             "calendar": match["calendar"],
-            "day": int(match["day"]),
+            "day": int(match["day"]) if match["day"] else None,
             "month": match["month"],
             "year": int(match["year"]),
             "epoch": match["epoch"],

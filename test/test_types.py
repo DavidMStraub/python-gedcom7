@@ -126,6 +126,27 @@ def test_date():
         "year": 2022,
         "epoch": "BCE",
     }
+    assert T.DateValue("11 JAN 2022").parse() == {
+        "calendar": None,
+        "day": 11,
+        "month": "JAN",
+        "year": 2022,
+        "epoch": None,
+    }
+    assert T.DateValue("JAN 2022").parse() == {
+        "calendar": None,
+        "day": None,
+        "month": "JAN",
+        "year": 2022,
+        "epoch": None,
+    }
+    assert T.DateValue("2022").parse() == {
+        "calendar": None,
+        "day": None,
+        "month": None,
+        "year": 2022,
+        "epoch": None,
+    }
 
 
 def test_dateperiod():
@@ -146,6 +167,22 @@ def test_dateperiod():
             "year": 2022,
             "month": "JAN",
             "day": 11,
+            "epoch": None,
+        },
+    }
+    assert T.DatePeriod("FROM 2021 TO 2022").parse() == {
+        "from": {
+            "calendar": None,
+            "year": 2021,
+            "month": None,
+            "day": None,
+            "epoch": None,
+        },
+        "to": {
+            "calendar": None,
+            "year": 2022,
+            "month": None,
+            "day": None,
             "epoch": None,
         },
     }
