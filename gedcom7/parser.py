@@ -18,7 +18,10 @@ def loads(string: str) -> List[GedcomStructure]:
         level = int(data["level"])
         # handle continuation lines
         if data["tag"] == const.CONT:
-            context[level - 1].text += "\n" + data["linestr"]
+            if not context[level - 1].text:
+                context[level - 1].text =  ""
+                
+            context[level - 1].text += "\n" + data["linestr"] if data["linestr"] else ""
             continue
         structure = GedcomStructure(
             tag=ext.get(data["tag"]) or data["tag"],
