@@ -1,9 +1,11 @@
 """Classes and data types."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from typing import Literal, Union
 
 from . import const
-from dataclasses import dataclass, field
 
 
 @dataclass

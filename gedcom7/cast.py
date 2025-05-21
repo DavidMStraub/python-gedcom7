@@ -1,9 +1,11 @@
 """Cast strings values to the appropriate data type."""
 
+from __future__ import annotations
+
 import re
 from collections.abc import Callable
 
-from . import const, types, grammar
+from . import const, grammar, types
 
 
 def cast_value(text: str, type_id: str) -> types.DataType | None:
