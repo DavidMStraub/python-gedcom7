@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 
 from . import const, grammar, types
+
+logger = logging.getLogger(__name__)
 
 
 def cast_value(text: str, type_id: str) -> types.DataType | None:
@@ -13,6 +16,7 @@ def cast_value(text: str, type_id: str) -> types.DataType | None:
         return None
     payload = const.payloads.get(type_id)
     if not payload:
+        logger.warning("Encountered unknown data type %s", type_id)
         return None
     cast_fuction = CAST_FUNCTIONS.get(payload)
     if not cast_fuction:
@@ -146,7 +150,11 @@ def _cast_date_period(value: str) -> types.DatePeriod:
         if to_date_match:
             res["to"] = types.Date(
                 calendar=to_date_match.group("calendar"),
-                day=int(to_date_match.group("day")) if to_date_match.group("day") else None,
+                day=(
+                    int(to_date_match.group("day"))
+                    if to_date_match.group("day")
+                    else None
+                ),
                 month=to_date_match.group("month"),
                 year=int(to_date_match.group("year")),
                 epoch=to_date_match.group("epoch"),
@@ -156,7 +164,11 @@ def _cast_date_period(value: str) -> types.DatePeriod:
         if from_date_match:
             res["from_"] = types.Date(
                 calendar=from_date_match.group("calendar"),
-                day=int(from_date_match.group("day")) if from_date_match.group("day") else None,
+                day=(
+                    int(from_date_match.group("day"))
+                    if from_date_match.group("day")
+                    else None
+                ),
                 month=from_date_match.group("month"),
                 year=int(from_date_match.group("year")),
                 epoch=from_date_match.group("epoch"),

@@ -1,10 +1,9 @@
 """GEDCOM 7 parser."""
 
-
 import re
 from typing import Dict, List
 
-from . import const, grammar
+from . import cast, const, grammar
 from .types import GedcomStructure
 
 
@@ -39,6 +38,10 @@ def loads(string: str) -> List[GedcomStructure]:
         if level > 0:
             parent = context[level - 1]
             structure.parent = parent
+        structure.value = cast.cast_value(
+            text=structure.text, type_id=structure.type_id
+        )
+        if level > 0:
             parent.children.append(structure)
         else:
             records.append(structure)

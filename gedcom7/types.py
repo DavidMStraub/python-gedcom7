@@ -18,6 +18,7 @@ class GedcomStructure:
     xref: str
     children: list["GedcomStructure"] = field(default_factory=list)
     parent: "GedcomStructure | None" = None
+    value: "DataType" | None = None
 
     @property
     def type_id(self) -> str:
