@@ -1,17 +1,16 @@
 """GEDCOM 7 parser."""
 
 import re
-from typing import Dict, List
 
 from . import cast, const, grammar
 from .types import GedcomStructure
 
 
-def loads(string: str) -> List[GedcomStructure]:
+def loads(string: str) -> list[GedcomStructure]:
     """Load from a string."""
-    context: Dict[int, GedcomStructure] = {}
-    records: List[GedcomStructure] = []
-    ext: Dict[str, str] = {}
+    context: dict[int, GedcomStructure] = {}
+    records: list[GedcomStructure] = []
+    ext: dict[str, str] = {}
     for match in re.finditer(grammar.line, string):
         data = match.groupdict()
         level = int(data["level"])

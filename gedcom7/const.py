@@ -143,6 +143,9 @@ WIFE = "WIFE"
 WILL = "WILL"
 WWW = "WWW"
 
+MIME_TEXT = "text/plain"
+MIME_HTML = "text/html"
+
 payloads = {
     "https://gedcom.io/terms/v7/ABBR": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/ADDR": "http://www.w3.org/2001/XMLSchema#string",
