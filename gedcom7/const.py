@@ -1,6 +1,5 @@
 """Constants."""
 
-
 CONT = "CONT"
 HEAD = "HEAD"
 ABBR = "ABBR"
@@ -1923,4 +1922,20 @@ substructures = {
     "https://gedcom.io/terms/v7/REFN": {"TYPE": "https://gedcom.io/terms/v7/TYPE"},
     "https://gedcom.io/terms/v7/EXID": {"TYPE": "https://gedcom.io/terms/v7/EXID-TYPE"},
     "https://gedcom.io/terms/v7/GEDC": {"VERS": "https://gedcom.io/terms/v7/GEDC-VERS"},
+}
+
+
+GEDCOM_MONTHS = {
+    "JAN": 1,
+    "FEB": 2,
+    "MAR": 3,
+    "APR": 4,
+    "MAY": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AUG": 8,
+    "SEP": 9,
+    "OCT": 10,
+    "NOV": 11,
+    "DEC": 12,
 }
