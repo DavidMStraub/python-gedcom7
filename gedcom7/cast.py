@@ -60,7 +60,9 @@ def _cast_personal_name(value: str) -> types.PersonalName:
     match = _match(value, grammar.personalname, "PersonalName")
     return types.PersonalName(
         fullname=value.replace("/", ""),
-        surname=match.group("surname"),
+        surname=match.group("surname").strip() if match.group("surname") else None,
+        given=match.group("given").strip() if match.group("given") else None,
+        suffix=match.group("suffix").strip() if match.group("suffix") else None,
     )
 
 

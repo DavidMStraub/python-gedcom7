@@ -37,10 +37,13 @@ def test_cast_personal_name():
     assert cast._cast_personal_name("John /Doe/") == types.PersonalName(
         fullname="John Doe",
         surname="Doe",
+        given="John",
     )
     assert cast._cast_personal_name("John /Doe/ Smith") == types.PersonalName(
         fullname="John Doe Smith",
         surname="Doe",
+        given="John",
+        suffix="Smith",
     )
     with pytest.raises(ValueError):
         cast._cast_personal_name("John /Doe/ Smith /Smith/")
@@ -51,14 +54,17 @@ def test_cast_personal_name():
     assert cast._cast_personal_name("José /O'Malley/") == types.PersonalName(
         fullname="José O'Malley",
         surname="O'Malley",
+        given="José",
     )
     assert cast._cast_personal_name("María-José /García-López/") == types.PersonalName(
         fullname="María-José García-López",
         surname="García-López",
+        given="María-José",
     )
     assert cast._cast_personal_name("Søren /Ødegård/") == types.PersonalName(
         fullname="Søren Ødegård",
         surname="Ødegård",
+        given="Søren",
     )
 
 

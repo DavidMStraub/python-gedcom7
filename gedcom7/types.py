@@ -39,7 +39,9 @@ class PersonalName:
     """Personal name type."""
 
     fullname: str
+    given: str | None = None
     surname: str | None = None
+    suffix: str | None = None
 
 
 @dataclass
