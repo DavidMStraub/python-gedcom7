@@ -1,5 +1,7 @@
 """Utility functions for GEDCOM 7 processing."""
 
+from __future__ import annotations
+
 import datetime
 
 from . import const, types
