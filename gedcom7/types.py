@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal, Union
 
-from . import const
+from . import cast, const
 
 
 @dataclass
@@ -18,7 +18,6 @@ class GedcomStructure:
     xref: str
     children: list["GedcomStructure"] = field(default_factory=list)
     parent: "GedcomStructure | None" = None
-    value: "DataType" | None = None
 
     @property
     def type_id(self) -> str:
@@ -32,6 +31,20 @@ class GedcomStructure:
                 return "TRLR pseudostructure"
             return const.substructures[""][self.tag]
         return const.substructures[self.parent.type_id][self.tag]
+
+    def __post_init__(self):
+        """Post-init steps: set parent on children."""
+        for child in self.children:
+            child.parent = self
+
+    def append_child(self, child: "GedcomStructure") -> None:
+        """Append a child to the structure and set the child's parent to self."""
+        child.parent = self
+        self.children.append(child)
+
+    @property
+    def value(self) -> "DataType | None":
+        return cast.cast_value(text=self.text, type_id=self.type_id)
 
 
 @dataclass
