@@ -142,6 +142,30 @@ def _cast_date(value: str) -> types.Date:
     )
 
 
+def _cast_date_approx(value: str) -> types.DateApprox:
+    """Cast a string to a DateApprox."""
+    match = _match(value, grammar.dateapprox, "DateApprox")
+    return types.DateApprox(
+        date=_cast_date(match.group("dateapprox")),
+        approx=match.group("qualifier"),
+    )
+
+
+def _cast_date_range(value: str) -> types.DateRange:
+    """Cast a string to a DateRange."""
+    match = _match(value, grammar.daterange, "DateRange")
+    res = {}
+    if match.group("between"):
+        res["start"] = _cast_date(match.group("between"))
+    if match.group("and"):
+        res["end"] = _cast_date(match.group("and"))
+    if match.group("after"):
+        res["start"] = _cast_date(match.group("after"))
+    if match.group("before"):
+        res["end"] = _cast_date(match.group("before"))
+    return types.DateRange(**res)
+
+
 def _cast_date_period(value: str) -> types.DatePeriod:
     """Cast a string to a DatePeriod."""
     match = _match(value, grammar.dateperiod, "DatePeriod")
@@ -178,6 +202,27 @@ def _cast_date_period(value: str) -> types.DatePeriod:
     return types.DatePeriod(**res)
 
 
+def _cast_date_value(value: str) -> types.DateValue:
+    """Cast a string to a DateValue.
+
+    A DateValue can be one of the following:
+    - A standard date: "1 OCT 2023"
+    - A dateperiod: "FROM 1 JAN 2023 TO 31 DEC 2023"
+    - A daterange: "BET 1 JAN 2023 AND 31 DEC 2023"
+    - A dateapprox: "ABT 1 OCT 2023"
+    """
+    dateapprox_match = re.fullmatch(grammar.dateapprox, value)
+    if dateapprox_match:
+        return _cast_date_approx(value)
+    daterange_match = re.fullmatch(grammar.daterange, value)
+    if daterange_match:
+        return _cast_date_range(value)
+    dateperiod_match = re.fullmatch(grammar.dateperiod, value)
+    if dateperiod_match:
+        return _cast_date_period(value)
+    return _cast_date(value)
+
+
 CAST_FUNCTIONS: dict[str, Callable[[str], types.DataType] | None] = {
     "Y|<NULL>": _cast_bool,
     "http://www.w3.org/2001/XMLSchema#Language": None,
@@ -185,7 +230,7 @@ CAST_FUNCTIONS: dict[str, Callable[[str], types.DataType] | None] = {
     "http://www.w3.org/2001/XMLSchema#string": None,
     "http://www.w3.org/ns/dcat#mediaType": _cast_mediatype,
     "https://gedcom.io/terms/v7/type-Age": _cast_age,
-    "https://gedcom.io/terms/v7/type-Date": _cast_date,
+    "https://gedcom.io/terms/v7/type-Date": _cast_date_value,
     "https://gedcom.io/terms/v7/type-Date#exact": _cast_date_exact,
     "https://gedcom.io/terms/v7/type-Date#period": _cast_date_period,
     "https://gedcom.io/terms/v7/type-Enum": _cast_enum,

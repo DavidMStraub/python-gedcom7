@@ -126,7 +126,7 @@ class DateApprox:
 class DateRange:
     """Date range type."""
 
-    start: Date
+    start: Date | None = None
     end: Date | None = None
 
 

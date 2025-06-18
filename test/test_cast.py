@@ -336,3 +336,181 @@ def test_cast_date_period():
     )
     with pytest.raises(ValueError):
         cast._cast_date_period("11 JAN 2022")
+
+
+def test_cast_date_range():
+    assert cast._cast_date_range("BET 1 JAN 2020 AND 31 DEC 2020") == types.DateRange(
+        start=types.Date(
+            calendar=None,
+            day=1,
+            month="JAN",
+            year=2020,
+            epoch=None,
+        ),
+        end=types.Date(
+            calendar=None,
+            day=31,
+            month="DEC",
+            year=2020,
+            epoch=None,
+        ),
+    )
+    assert cast._cast_date_range("AFT 1 JAN 2020") == types.DateRange(
+        start=types.Date(
+            calendar=None,
+            day=1,
+            month="JAN",
+            year=2020,
+            epoch=None,
+        ),
+        end=None,
+    )
+
+    assert cast._cast_date_range("BEF 31 DEC 2020") == types.DateRange(
+        start=None,
+        end=types.Date(
+            calendar=None,
+            day=31,
+            month="DEC",
+            year=2020,
+            epoch=None,
+        ),
+    )
+
+    assert cast._cast_date_range(
+        "BET JULIAN 1 FEB 1600 BCE AND 31 MAR 1500"
+    ) == types.DateRange(
+        start=types.Date(
+            calendar="JULIAN",
+            day=1,
+            month="FEB",
+            year=1600,
+            epoch="BCE",
+        ),
+        end=types.Date(
+            calendar=None,
+            day=31,
+            month="MAR",
+            year=1500,
+            epoch=None,
+        ),
+    )
+
+    with pytest.raises(ValueError):
+        cast._cast_date_range("FROM 1 JAN 2020 TO 31 DEC 2020")
+
+    with pytest.raises(ValueError):
+        cast._cast_date_range("11 JAN 2022")
+
+
+def test_cast_date_approx():
+    assert cast._cast_date_approx("ABT 11 JAN 2022") == types.DateApprox(
+        date=types.Date(
+            calendar=None,
+            day=11,
+            month="JAN",
+            year=2022,
+            epoch=None,
+        ),
+        approx="ABT",
+    )
+
+    assert cast._cast_date_approx("EST JULIAN 5 MAY 1755 BCE") == types.DateApprox(
+        date=types.Date(
+            calendar="JULIAN",
+            day=5,
+            month="MAY",
+            year=1755,
+            epoch="BCE",
+        ),
+        approx="EST",
+    )
+
+    assert cast._cast_date_approx("CAL 1 JAN 2021") == types.DateApprox(
+        date=types.Date(
+            calendar=None,
+            day=1,
+            month="JAN",
+            year=2021,
+            epoch=None,
+        ),
+        approx="CAL",
+    )
+
+    with pytest.raises(ValueError):
+        cast._cast_date_approx("APPROXIMATELY 11 JAN 2022")
+
+    with pytest.raises(ValueError):
+        cast._cast_date_approx("11 JAN 2022")
+
+
+def test_cast_date_value():
+    # Test with standard date
+    assert isinstance(cast._cast_date_value("11 JAN 2022"), types.Date)
+    assert cast._cast_date_value("11 JAN 2022") == types.Date(
+        calendar=None,
+        day=11,
+        month="JAN",
+        year=2022,
+        epoch=None,
+    )
+
+    # Test with date approximation
+    assert isinstance(cast._cast_date_value("ABT 11 JAN 2022"), types.DateApprox)
+    assert cast._cast_date_value("ABT 11 JAN 2022") == types.DateApprox(
+        date=types.Date(
+            calendar=None,
+            day=11,
+            month="JAN",
+            year=2022,
+            epoch=None,
+        ),
+        approx="ABT",
+    )
+
+    # Test with date range
+    assert isinstance(
+        cast._cast_date_value("BET 1 JAN 2020 AND 31 DEC 2020"), types.DateRange
+    )
+    assert cast._cast_date_value("BET 1 JAN 2020 AND 31 DEC 2020") == types.DateRange(
+        start=types.Date(
+            calendar=None,
+            day=1,
+            month="JAN",
+            year=2020,
+            epoch=None,
+        ),
+        end=types.Date(
+            calendar=None,
+            day=31,
+            month="DEC",
+            year=2020,
+            epoch=None,
+        ),
+    )
+
+    # Test with date period
+    assert isinstance(
+        cast._cast_date_value("FROM 1 JAN 2020 TO 31 DEC 2020"), types.DatePeriod
+    )
+    assert cast._cast_date_value("FROM 1 JAN 2020 TO 31 DEC 2020") == types.DatePeriod(
+        from_=types.Date(
+            calendar=None,
+            day=1,
+            month="JAN",
+            year=2020,
+            epoch=None,
+        ),
+        to=types.Date(
+            calendar=None,
+            day=31,
+            month="DEC",
+            year=2020,
+            epoch=None,
+        ),
+    )
+
+    # Test with invalid format
+    with pytest.raises(ValueError):
+        cast._cast_date_value("2022-01-11")
+
