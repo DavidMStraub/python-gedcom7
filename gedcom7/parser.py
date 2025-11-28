@@ -14,15 +14,16 @@ def loads(string: str) -> list[GedcomStructure]:
     for match in re.finditer(grammar.line, string):
         data = match.groupdict()
         level = int(data["level"])
+        linestr = data["linestr"] or ""
         # handle continuation lines
         if data["tag"] == const.CONT:
-            context[level - 1].text += "\n" + data["linestr"]
+            context[level - 1].text += "\n" + linestr
             continue
         structure = GedcomStructure(
             tag=ext.get(data["tag"]) or data["tag"],
             pointer=data["pointer"],
             xref=data["xref"],
-            text=data["linestr"],
+            text=linestr,
         )
         # handle extension tags
         if (

@@ -42,3 +42,45 @@ def test_exttag():
     records = gedcom7.loads(GEDCOM_EXTTAG)
     assert len(records) == 3
     assert records[1].children[1].tag == "http://example.com/placeholder"
+
+
+GEDCOM_BLANK_CONT = """0 HEAD
+1 GEDC
+2 VERS 7.0
+0 @I1@ INDI
+1 NOTE This is a note
+2 CONT
+2 CONT with a blank line above
+0 TRLR
+"""
+
+
+def test_blank_cont_line():
+    """Test that blank CONT lines are handled correctly."""
+    records = gedcom7.loads(GEDCOM_BLANK_CONT)
+    assert len(records) == 3
+    indi = records[1]
+    note = indi.children[0]
+    assert note.tag == "NOTE"
+    assert note.text == "This is a note\n\nwith a blank line above"
+
+
+GEDCOM_EMPTY_VALUE = """0 HEAD
+1 GEDC
+2 VERS 7.0
+0 @O1@ OBJE
+1 FILE
+2 FORM image/jpeg
+0 TRLR
+"""
+
+
+def test_empty_line_value():
+    """Test that lines with no value (like empty FILE) are handled correctly."""
+    records = gedcom7.loads(GEDCOM_EMPTY_VALUE)
+    assert len(records) == 3
+    obje = records[1]
+    file_struct = obje.children[0]
+    assert file_struct.tag == "FILE"
+    assert file_struct.text == ""
+    assert file_struct.children[0].tag == "FORM"
