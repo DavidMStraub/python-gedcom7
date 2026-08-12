@@ -1,3 +1,68 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "gedcom7"
+description = "GEDCOM 7 parser"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "David M. Straub", email = "straub@protonmail.com" }]
+keywords = ["gedcom", "gedcom7", "genealogy", "parser"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Sociology :: Genealogy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/DavidMStraub/python-gedcom7"
+Issues = "https://github.com/DavidMStraub/python-gedcom7/issues"
+Source = "https://github.com/DavidMStraub/python-gedcom7"
+
+[dependency-groups]
+dev = ["mypy", "pytest", "pytest-cov", "ruff"]
+
+[tool.setuptools]
+packages = ["gedcom7"]
+
+[tool.setuptools.package-data]
+gedcom7 = ["py.typed"]
+
+[tool.setuptools_scm]
+# Version is derived from git tags (vX.Y.Z); no version string is stored in the tree.
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+addopts = "--strict-markers --strict-config"
+
+[tool.mypy]
+python_version = "3.10"
+files = ["gedcom7", "test"]
+strict = true
+
+[tool.ruff]
+target-version = "py310"
+# Generated from the ABNF grammar by abnf-to-regexp; not hand-maintained.
+extend-exclude = ["gedcom7/grammar.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["D"]

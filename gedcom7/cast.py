@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def cast_value(text: str, type_id: str) -> types.DataType | None:
+    """Cast a payload string to the data type appropriate for its structure type."""
     if not text:
         return None
     payload = const.payloads.get(type_id)
@@ -38,8 +39,8 @@ def _cast_integer(value: str) -> int:
     """Cast a string to an integer."""
     try:
         return int(value)
-    except ValueError:
-        raise ValueError(f"Cannot interpret {value} as integer")
+    except ValueError as exc:
+        raise ValueError(f"Cannot interpret {value} as integer") from exc
 
 
 def _cast_list_text(value: str) -> list[str]:
@@ -47,7 +48,7 @@ def _cast_list_text(value: str) -> list[str]:
     return [el.strip() for el in value.split(",")]
 
 
-def _match(text: str, regex: str, type_name: str) -> re.Match:
+def _match(text: str, regex: str, type_name: str) -> re.Match[str]:
     """Match a string and raise if not compatible."""
     match = re.fullmatch(regex, text)
     if not match:
@@ -70,7 +71,8 @@ def _cast_time(value: str) -> types.Time:
     """Cast a string to a Time."""
     match = _match(value, grammar.time, "Time")
     return types.Time(
-        tz=match.group("tz"),
+        # the tz group is `(?P<tz>Z)?`, so it is either "Z" or absent
+        tz="Z" if match.group("tz") else None,
         hour=int(match.group("hour")),
         minute=int(match.group("minute")),
         second=int(match.group("second")) if match.group("second") else None,

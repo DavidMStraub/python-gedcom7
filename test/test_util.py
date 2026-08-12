@@ -8,7 +8,7 @@ import pytest
 from gedcom7 import types, util
 
 
-def test_get_child_with_tag():
+def test_get_child_with_tag() -> None:
     """Test getting a child structure by tag."""
     # Create parent structure with children
     parent = types.GedcomStructure(tag="PARENT", pointer="", text="", xref="")
@@ -31,7 +31,7 @@ def test_get_child_with_tag():
     assert result.text == "Child 2"
 
 
-def test_no_matching_child():
+def test_no_matching_child() -> None:
     """Test when no child matches the given tag."""
     parent = types.GedcomStructure(tag="PARENT", pointer="", text="", xref="")
     child = types.GedcomStructure(tag="CHILD", pointer="", text="Child", xref="")
@@ -43,7 +43,7 @@ def test_no_matching_child():
     assert result is None
 
 
-def test_empty_children_list():
+def test_empty_children_list() -> None:
     """Test with an empty children list."""
     parent = types.GedcomStructure(tag="PARENT", pointer="", text="", xref="")
     parent.children = []
@@ -52,7 +52,7 @@ def test_empty_children_list():
     assert result is None
 
 
-def test_valid_date_conversion():
+def test_valid_date_conversion() -> None:
     """Test converting a valid GEDCOM DateExact to Python date."""
     # Test with all months
     months = [
@@ -80,7 +80,7 @@ def test_valid_date_conversion():
         assert python_date.year == 2023
 
 
-def test_case_insensitive_month():
+def test_case_insensitive_month() -> None:
     """Test that month names are case-insensitive."""
     # Test with lowercase
     gedcom_date = types.DateExact(day=15, month="jan", year=2023)
@@ -95,7 +95,7 @@ def test_case_insensitive_month():
     assert python_date.month == 7
 
 
-def test_invalid_month():
+def test_invalid_month() -> None:
     """Test with an invalid month name."""
     gedcom_date = types.DateExact(day=15, month="INVALID", year=2023)
 
@@ -103,7 +103,7 @@ def test_invalid_month():
         util.date_exact_to_python_date(gedcom_date)
 
 
-def test_basic_time_conversion():
+def test_basic_time_conversion() -> None:
     """Test basic time conversion with hours and minutes only."""
     gedcom_time = types.Time(hour=14, minute=30)
     python_time = util.time_to_python_time(gedcom_time)
@@ -116,7 +116,7 @@ def test_basic_time_conversion():
     assert python_time.tzinfo == datetime.timezone.utc
 
 
-def test_time_with_seconds():
+def test_time_with_seconds() -> None:
     """Test time conversion with seconds."""
     gedcom_time = types.Time(hour=14, minute=30, second=45)
     python_time = util.time_to_python_time(gedcom_time)
@@ -124,7 +124,7 @@ def test_time_with_seconds():
     assert python_time.second == 45
 
 
-def test_time_with_fraction():
+def test_time_with_fraction() -> None:
     """Test time conversion with fractional seconds."""
     gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123456)
     python_time = util.time_to_python_time(gedcom_time)
@@ -140,7 +140,7 @@ def test_time_with_fraction():
     assert python_time.microsecond == 500000
 
 
-def test_time_without_fraction_or_seconds():
+def test_time_without_fraction_or_seconds() -> None:
     """Test time conversion without fraction or seconds."""
     gedcom_time = types.Time(hour=14, minute=30, second=None, fraction=None)
     python_time = util.time_to_python_time(gedcom_time)
@@ -149,7 +149,7 @@ def test_time_without_fraction_or_seconds():
     assert python_time.microsecond == 0
 
 
-def test_date_only():
+def test_date_only() -> None:
     """Test conversion with date only (no time)."""
     gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
     python_datetime = util.date_exact_and_time_to_python_datetime(gedcom_date)
@@ -165,7 +165,7 @@ def test_date_only():
     assert python_datetime.tzinfo == datetime.timezone.utc
 
 
-def test_date_and_time():
+def test_date_and_time() -> None:
     """Test conversion with both date and time."""
     gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
     gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123)
@@ -184,21 +184,23 @@ def test_date_and_time():
     assert python_datetime.tzinfo == datetime.timezone.utc
 
 
-def test_integration_with_other_functions():
+def test_integration_with_other_functions() -> None:
     """Test that the function integrates correctly with other utility functions."""
-    with patch("gedcom7.util.date_exact_to_python_date") as mock_date_fn:
-        with patch("gedcom7.util.time_to_python_time") as mock_time_fn:
-            # Mock the return values
-            mock_date_fn.return_value = datetime.date(2023, 1, 15)
-            mock_time_fn.return_value = datetime.time(
-                14, 30, 45, 123000, tzinfo=datetime.timezone.utc
-            )
+    with (
+        patch("gedcom7.util.date_exact_to_python_date") as mock_date_fn,
+        patch("gedcom7.util.time_to_python_time") as mock_time_fn,
+    ):
+        # Mock the return values
+        mock_date_fn.return_value = datetime.date(2023, 1, 15)
+        mock_time_fn.return_value = datetime.time(
+            14, 30, 45, 123000, tzinfo=datetime.timezone.utc
+        )
 
-            gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
-            gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123)
+        gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
+        gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123)
 
-            util.date_exact_and_time_to_python_datetime(gedcom_date, gedcom_time)
+        util.date_exact_and_time_to_python_datetime(gedcom_date, gedcom_time)
 
-            # Verify the functions were called with correct arguments
-            mock_date_fn.assert_called_once_with(gedcom_date)
-            mock_time_fn.assert_called_once_with(gedcom_time)
+        # Verify the functions were called with correct arguments
+        mock_date_fn.assert_called_once_with(gedcom_date)
+        mock_time_fn.assert_called_once_with(gedcom_time)

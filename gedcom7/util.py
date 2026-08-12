@@ -24,8 +24,8 @@ def date_exact_to_python_date(date: types.DateExact) -> datetime.date:
     """Convert a GEDCOM DateExact to a Python date."""
     try:
         month = const.GEDCOM_MONTHS[date.month.upper()]
-    except KeyError:
-        raise ValueError(f"Invalid month in date: {date.month}")
+    except KeyError as exc:
+        raise ValueError(f"Invalid month in date: {date.month}") from exc
     return datetime.date(year=date.year, month=month, day=date.day)
 
 

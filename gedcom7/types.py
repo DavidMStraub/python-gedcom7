@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Union
+from typing import Literal
 
 from . import cast, const
 
@@ -16,8 +16,8 @@ class GedcomStructure:
     pointer: str
     text: str
     xref: str
-    children: list["GedcomStructure"] = field(default_factory=list)
-    parent: "GedcomStructure | None" = None
+    children: list[GedcomStructure] = field(default_factory=list)
+    parent: GedcomStructure | None = None
 
     @property
     def type_id(self) -> str:
@@ -32,18 +32,19 @@ class GedcomStructure:
             return const.substructures[""][self.tag]
         return const.substructures[self.parent.type_id][self.tag]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-init steps: set parent on children."""
         for child in self.children:
             child.parent = self
 
-    def append_child(self, child: "GedcomStructure") -> None:
+    def append_child(self, child: GedcomStructure) -> None:
         """Append a child to the structure and set the child's parent to self."""
         child.parent = self
         self.children.append(child)
 
     @property
-    def value(self) -> "DataType | None":
+    def value(self) -> DataType | None:
+        """Get the payload cast to its appropriate data type."""
         return cast.cast_value(text=self.text, type_id=self.type_id)
 
 
@@ -130,24 +131,19 @@ class DateRange:
     end: Date | None = None
 
 
-DateValue = Union[
-    Date,
-    DatePeriod,
-    DateApprox,
-    DateRange,
-]
+DateValue = Date | DatePeriod | DateApprox | DateRange
 
-DataType = Union[
-    str,
-    int,
-    list[str],
-    PersonalName,
-    Time,
-    Age,
-    MediaType,
-    DateExact,
-    DateApprox,
-    DateRange,
-    DatePeriod,
-    DateValue,
-]
+DataType = (
+    str
+    | int
+    | list[str]
+    | PersonalName
+    | Time
+    | Age
+    | MediaType
+    | DateExact
+    | DateApprox
+    | DateRange
+    | DatePeriod
+    | DateValue
+)

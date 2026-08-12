@@ -2,7 +2,7 @@
 
 import re
 
-from . import cast, const, grammar
+from . import const, grammar
 from .types import GedcomStructure
 
 

@@ -1,13 +1,14 @@
 import pytest
+
 from gedcom7 import cast, types
 
 
-def test_cast_bool():
+def test_cast_bool() -> None:
     assert cast._cast_bool("Y") is True
     assert cast._cast_bool("") is False
 
 
-def test_cast_integer():
+def test_cast_integer() -> None:
     assert cast._cast_integer("1") == 1
     assert cast._cast_integer("0") == 0
     assert cast._cast_integer("-1") == -1
@@ -18,7 +19,7 @@ def test_cast_integer():
         cast._cast_integer("")
 
 
-def test_cast_list_text():
+def test_cast_list_text() -> None:
     assert cast._cast_list_text("foo") == ["foo"]
     assert cast._cast_list_text("foo,bar") == ["foo", "bar"]
     assert cast._cast_list_text("foo, bar") == ["foo", "bar"]
@@ -29,7 +30,7 @@ def test_cast_list_text():
     assert cast._cast_list_text("foo, ") == ["foo", ""]
 
 
-def test_cast_personal_name():
+def test_cast_personal_name() -> None:
     assert cast._cast_personal_name("John Doe") == types.PersonalName(
         fullname="John Doe",
         surname=None,
@@ -68,7 +69,7 @@ def test_cast_personal_name():
     )
 
 
-def test_cast_time():
+def test_cast_time() -> None:
     assert cast._cast_time("13:15") == types.Time(
         hour=13,
         minute=15,
@@ -107,128 +108,129 @@ def test_cast_time():
     with pytest.raises(ValueError):
         cast._cast_time("13:15A")  # Invalid timezone, should be Z
 
-    def test_cast_age():
-        # Testing basic combinations
-        assert cast._cast_age("3y") == types.Age(
-            years=3,
-            months=None,
-            weeks=None,
-            days=None,
-            agebound=None,
-        )
-        assert cast._cast_age("> 3y") == types.Age(
-            years=3,
-            months=None,
-            weeks=None,
-            days=None,
-            agebound=">",
-        )
-        assert cast._cast_age("3y 6m 5d") == types.Age(
-            years=3,
-            months=6,
-            weeks=None,
-            days=5,
-            agebound=None,
-        )
-        assert cast._cast_age("3y 6m") == types.Age(
-            years=3,
-            months=6,
-            weeks=None,
-            days=None,
-            agebound=None,
-        )
-        assert cast._cast_age("3y 6m 5d 2w") == types.Age(
-            years=3,
-            months=6,
-            weeks=2,
-            days=5,
-            agebound=None,
-        )
 
-        # Testing various partial combinations
-        assert cast._cast_age("6m 2w") == types.Age(
-            years=None,
-            months=6,
-            weeks=2,
-            days=None,
-            agebound=None,
-        )
-        assert cast._cast_age("6m 5d") == types.Age(
-            years=None,
-            months=6,
-            weeks=None,
-            days=5,
-            agebound=None,
-        )
-        assert cast._cast_age("2w 5d") == types.Age(
-            years=None,
-            months=None,
-            weeks=2,
-            days=5,
-            agebound=None,
-        )
-        assert cast._cast_age("5d") == types.Age(
-            years=None,
-            months=None,
-            weeks=None,
-            days=5,
-            agebound=None,
-        )
+def test_cast_age() -> None:
+    # Testing basic combinations
+    assert cast._cast_age("3y") == types.Age(
+        years=3,
+        months=None,
+        weeks=None,
+        days=None,
+        agebound=None,
+    )
+    assert cast._cast_age("> 3y") == types.Age(
+        years=3,
+        months=None,
+        weeks=None,
+        days=None,
+        agebound=">",
+    )
+    assert cast._cast_age("3y 6m 5d") == types.Age(
+        years=3,
+        months=6,
+        weeks=None,
+        days=5,
+        agebound=None,
+    )
+    assert cast._cast_age("3y 6m") == types.Age(
+        years=3,
+        months=6,
+        weeks=None,
+        days=None,
+        agebound=None,
+    )
+    assert cast._cast_age("3y 6m 2w 5d") == types.Age(
+        years=3,
+        months=6,
+        weeks=2,
+        days=5,
+        agebound=None,
+    )
 
-        # Testing with age bounds
-        assert cast._cast_age("< 6m") == types.Age(
-            years=None,
-            months=6,
-            weeks=None,
-            days=None,
-            agebound="<",
-        )
-        assert cast._cast_age("> 2w") == types.Age(
-            years=None,
-            months=None,
-            weeks=2,
-            days=None,
-            agebound=">",
-        )
-        assert cast._cast_age("< 5d") == types.Age(
-            years=None,
-            months=None,
-            weeks=None,
-            days=5,
-            agebound="<",
-        )
-        assert cast._cast_age("> 1y 6m") == types.Age(
-            years=1,
-            months=6,
-            weeks=None,
-            days=None,
-            agebound=">",
-        )
-        assert cast._cast_age("< 2y 3m 1w") == types.Age(
-            years=2,
-            months=3,
-            weeks=1,
-            days=None,
-            agebound="<",
-        )
+    # Testing various partial combinations
+    assert cast._cast_age("6m 2w") == types.Age(
+        years=None,
+        months=6,
+        weeks=2,
+        days=None,
+        agebound=None,
+    )
+    assert cast._cast_age("6m 5d") == types.Age(
+        years=None,
+        months=6,
+        weeks=None,
+        days=5,
+        agebound=None,
+    )
+    assert cast._cast_age("2w 5d") == types.Age(
+        years=None,
+        months=None,
+        weeks=2,
+        days=5,
+        agebound=None,
+    )
+    assert cast._cast_age("5d") == types.Age(
+        years=None,
+        months=None,
+        weeks=None,
+        days=5,
+        agebound=None,
+    )
 
-        # Test with zero values
-        assert cast._cast_age("0y 0m 0w 0d") == types.Age(
-            years=0,
-            months=0,
-            weeks=0,
-            days=0,
-            agebound=None,
-        )
+    # Testing with age bounds
+    assert cast._cast_age("< 6m") == types.Age(
+        years=None,
+        months=6,
+        weeks=None,
+        days=None,
+        agebound="<",
+    )
+    assert cast._cast_age("> 2w") == types.Age(
+        years=None,
+        months=None,
+        weeks=2,
+        days=None,
+        agebound=">",
+    )
+    assert cast._cast_age("< 5d") == types.Age(
+        years=None,
+        months=None,
+        weeks=None,
+        days=5,
+        agebound="<",
+    )
+    assert cast._cast_age("> 1y 6m") == types.Age(
+        years=1,
+        months=6,
+        weeks=None,
+        days=None,
+        agebound=">",
+    )
+    assert cast._cast_age("< 2y 3m 1w") == types.Age(
+        years=2,
+        months=3,
+        weeks=1,
+        days=None,
+        agebound="<",
+    )
 
-        # Test with invalid formats
-        with pytest.raises(ValueError):
-            cast._cast_age("invalid")
-        with pytest.raises(ValueError):
-            cast._cast_age("10")  # Missing unit
+    # Test with zero values
+    assert cast._cast_age("0y 0m 0w 0d") == types.Age(
+        years=0,
+        months=0,
+        weeks=0,
+        days=0,
+        agebound=None,
+    )
+
+    # Test with invalid formats
+    with pytest.raises(ValueError):
+        cast._cast_age("invalid")
+    with pytest.raises(ValueError):
+        cast._cast_age("10")  # Missing unit
 
 
-def test_cast_enum():
+def test_cast_enum() -> None:
     assert cast._cast_enum("FOO") == "FOO"
     assert cast._cast_enum("BAR") == "BAR"
     with pytest.raises(ValueError):
@@ -237,7 +239,7 @@ def test_cast_enum():
         cast._cast_enum("")
 
 
-def test_cast_list_enum():
+def test_cast_list_enum() -> None:
     assert cast._cast_list_enum("FOO") == ["FOO"]
     assert cast._cast_list_enum("FOO, BAR") == ["FOO", "BAR"]
     assert cast._cast_list_enum("FOO, BAR, BAZ") == ["FOO", "BAR", "BAZ"]
@@ -247,7 +249,7 @@ def test_cast_list_enum():
         cast._cast_list_enum("")
 
 
-def test_cast_mediatype():
+def test_cast_mediatype() -> None:
     assert cast._cast_mediatype("image/jpeg") == types.MediaType(
         media_type="image/jpeg"
     )
@@ -260,7 +262,7 @@ def test_cast_mediatype():
         cast._cast_mediatype("")
 
 
-def test_cast_date_exact():
+def test_cast_date_exact() -> None:
     assert cast._cast_date_exact("11 JAN 2022") == types.DateExact(
         day=11,
         month="JAN",
@@ -274,7 +276,7 @@ def test_cast_date_exact():
         cast._cast_date_exact("11 10 2022 CE")
 
 
-def test_cast_date():
+def test_cast_date() -> None:
     assert cast._cast_date("JULIAN 11 JAN 2022 BCE") == types.Date(
         calendar="JULIAN",
         day=11,
@@ -297,7 +299,7 @@ def test_cast_date():
         cast._cast_date("11 10 2022 CE")
 
 
-def test_cast_date_period():
+def test_cast_date_period() -> None:
     assert cast._cast_date_period("FROM JULIAN 5 MAY 1755 BCE") == types.DatePeriod(
         from_=types.Date(
             calendar="JULIAN",
@@ -338,7 +340,7 @@ def test_cast_date_period():
         cast._cast_date_period("11 JAN 2022")
 
 
-def test_cast_date_range():
+def test_cast_date_range() -> None:
     assert cast._cast_date_range("BET 1 JAN 2020 AND 31 DEC 2020") == types.DateRange(
         start=types.Date(
             calendar=None,
@@ -403,7 +405,7 @@ def test_cast_date_range():
         cast._cast_date_range("11 JAN 2022")
 
 
-def test_cast_date_approx():
+def test_cast_date_approx() -> None:
     assert cast._cast_date_approx("ABT 11 JAN 2022") == types.DateApprox(
         date=types.Date(
             calendar=None,
@@ -444,7 +446,7 @@ def test_cast_date_approx():
         cast._cast_date_approx("11 JAN 2022")
 
 
-def test_cast_date_value():
+def test_cast_date_value() -> None:
     # Test with standard date
     assert isinstance(cast._cast_date_value("11 JAN 2022"), types.Date)
     assert cast._cast_date_value("11 JAN 2022") == types.Date(
@@ -513,4 +515,3 @@ def test_cast_date_value():
     # Test with invalid format
     with pytest.raises(ValueError):
         cast._cast_date_value("2022-01-11")
-
