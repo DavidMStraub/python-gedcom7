@@ -13,15 +13,22 @@ class GedcomStructure:
     """Gedcom structure class."""
 
     tag: str
-    pointer: str
+    # absent for a line without a pointer payload / without a cross-reference id
+    pointer: str | None
     text: str
-    xref: str
+    xref: str | None
     children: list[GedcomStructure] = field(default_factory=list)
     parent: GedcomStructure | None = None
 
     @property
-    def type_id(self) -> str:
-        """Get the structure type ID."""
+    def type_id(self) -> str | None:
+        """Get the structure type ID, or None if no standard type applies.
+
+        A structure has no standard type when it uses an undocumented extension
+        tag, or when it is an extension-defined substructure -- both of which the
+        specification permits, and whose meaning is defined by the extension
+        rather than by this document.
+        """
         if "://" in self.tag:
             return self.tag
         if self.parent is None:
@@ -29,8 +36,11 @@ class GedcomStructure:
                 return "HEAD pseudostructure"
             if self.tag == const.TRLR:
                 return "TRLR pseudostructure"
-            return const.substructures[""][self.tag]
-        return const.substructures[self.parent.type_id][self.tag]
+            return const.substructures[""].get(self.tag)
+        parent_type_id = self.parent.type_id
+        if parent_type_id is None:
+            return None
+        return const.substructures.get(parent_type_id, {}).get(self.tag)
 
     def __post_init__(self) -> None:
         """Post-init steps: set parent on children."""
@@ -45,7 +55,12 @@ class GedcomStructure:
     @property
     def value(self) -> DataType | None:
         """Get the payload cast to its appropriate data type."""
-        return cast.cast_value(text=self.text, type_id=self.type_id)
+        type_id = self.type_id
+        if type_id is None:
+            # No standard structure type applies, so the payload's data type is
+            # defined by the extension. It is returned uninterpreted.
+            return self.text or None
+        return cast.cast_value(text=self.text, type_id=type_id)
 
 
 @dataclass
@@ -85,6 +100,14 @@ class MediaType:
     """Media type type."""
 
     media_type: str
+
+
+@dataclass
+class TagDefinition:
+    """Tag definition type: an extension tag and the URI it abbreviates."""
+
+    tag: str
+    uri: str
 
 
 @dataclass
@@ -136,7 +159,9 @@ DateValue = Date | DatePeriod | DateApprox | DateRange
 DataType = (
     str
     | int
+    | float
     | list[str]
+    | TagDefinition
     | PersonalName
     | Time
     | Age

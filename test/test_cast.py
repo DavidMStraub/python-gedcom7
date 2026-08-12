@@ -515,3 +515,63 @@ def test_cast_date_value() -> None:
     # Test with invalid format
     with pytest.raises(ValueError):
         cast._cast_date_value("2022-01-11")
+
+
+def test_cast_latitude() -> None:
+    assert cast._cast_latitude("N18.150944") == 18.150944
+    assert cast._cast_latitude("S18.150944") == -18.150944
+    assert cast._cast_latitude("N0") == 0.0
+    assert cast._cast_latitude("N90") == 90.0
+    assert cast._cast_latitude("S90") == -90.0
+
+    # Degrees are limited to 90
+    with pytest.raises(ValueError):
+        cast._cast_latitude("N91")
+    with pytest.raises(ValueError):
+        cast._cast_latitude("N100")
+    # A hemisphere is required, and must be N or S
+    with pytest.raises(ValueError):
+        cast._cast_latitude("18.5")
+    with pytest.raises(ValueError):
+        cast._cast_latitude("E18.5")
+    with pytest.raises(ValueError):
+        cast._cast_latitude("N")
+
+
+def test_cast_longitude() -> None:
+    assert cast._cast_longitude("E168.150944") == 168.150944
+    assert cast._cast_longitude("W168.150944") == -168.150944
+    assert cast._cast_longitude("E0") == 0.0
+    assert cast._cast_longitude("E180") == 180.0
+    assert cast._cast_longitude("W180") == -180.0
+
+    # Degrees are limited to 180
+    with pytest.raises(ValueError):
+        cast._cast_longitude("E181")
+    with pytest.raises(ValueError):
+        cast._cast_longitude("E200")
+    # A hemisphere is required, and must be E or W
+    with pytest.raises(ValueError):
+        cast._cast_longitude("168.5")
+    with pytest.raises(ValueError):
+        cast._cast_longitude("N168.5")
+
+
+def test_cast_tag_definition() -> None:
+    assert cast._cast_tag_definition(
+        "_SKYPEID http://xmlns.com/foaf/0.1/skypeID"
+    ) == types.TagDefinition(tag="_SKYPEID", uri="http://xmlns.com/foaf/0.1/skypeID")
+    # Relative URI references are permitted
+    assert cast._cast_tag_definition("_X ../rel#frag") == types.TagDefinition(
+        tag="_X", uri="../rel#frag"
+    )
+
+    # The tag must be an extension tag
+    with pytest.raises(ValueError):
+        cast._cast_tag_definition("SKYPEID http://example.com/x")
+    # A URI is required
+    with pytest.raises(ValueError):
+        cast._cast_tag_definition("_SKYPEID")
+    # A URI cannot contain a space
+    with pytest.raises(ValueError):
+        cast._cast_tag_definition("_SKYPEID http://example.com/a b")

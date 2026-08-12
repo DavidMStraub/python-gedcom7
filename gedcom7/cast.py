@@ -16,8 +16,11 @@ def cast_value(text: str, type_id: str) -> types.DataType | None:
     if not text:
         return None
     payload = const.payloads.get(type_id)
+    if payload is None:
+        logger.warning("Encountered unknown structure type %s", type_id)
+        return None
     if not payload:
-        logger.warning("Encountered unknown data type %s", type_id)
+        # the structure type is known to take no payload
         return None
     cast_fuction = CAST_FUNCTIONS.get(payload)
     if not cast_fuction:
@@ -120,6 +123,26 @@ def _cast_mediatype(value: str) -> types.MediaType:
     """Cast a string to a MediaType."""
     match = _match(value, grammar.mediatype, "MediaType")
     return types.MediaType(media_type=match.group(0))
+
+
+def _cast_latitude(value: str) -> float:
+    """Cast a string to a latitude in signed decimal degrees, north positive."""
+    match = _match(value, grammar.latitude, "Latitude")
+    degrees = float(match.group("degrees"))
+    return -degrees if match.group("direction").upper() == "S" else degrees
+
+
+def _cast_longitude(value: str) -> float:
+    """Cast a string to a longitude in signed decimal degrees, east positive."""
+    match = _match(value, grammar.longitude, "Longitude")
+    degrees = float(match.group("degrees"))
+    return -degrees if match.group("direction").upper() == "W" else degrees
+
+
+def _cast_tag_definition(value: str) -> types.TagDefinition:
+    """Cast a string to a TagDefinition."""
+    match = _match(value, grammar.tagdef, "TagDef")
+    return types.TagDefinition(tag=match.group("exttag"), uri=match.group("uri"))
 
 
 def _cast_date_exact(value: str) -> types.DateExact:
@@ -228,6 +251,7 @@ def _cast_date_value(value: str) -> types.DateValue:
 CAST_FUNCTIONS: dict[str, Callable[[str], types.DataType] | None] = {
     "Y|<NULL>": _cast_bool,
     "http://www.w3.org/2001/XMLSchema#Language": None,
+    "http://www.w3.org/2001/XMLSchema#anyURI": None,
     "http://www.w3.org/2001/XMLSchema#nonNegativeInteger": _cast_integer,
     "http://www.w3.org/2001/XMLSchema#string": None,
     "http://www.w3.org/ns/dcat#mediaType": _cast_mediatype,
@@ -236,8 +260,12 @@ CAST_FUNCTIONS: dict[str, Callable[[str], types.DataType] | None] = {
     "https://gedcom.io/terms/v7/type-Date#exact": _cast_date_exact,
     "https://gedcom.io/terms/v7/type-Date#period": _cast_date_period,
     "https://gedcom.io/terms/v7/type-Enum": _cast_enum,
+    "https://gedcom.io/terms/v7/type-FilePath": None,
+    "https://gedcom.io/terms/v7/type-Latitude": _cast_latitude,
     "https://gedcom.io/terms/v7/type-List#Enum": _cast_list_enum,
     "https://gedcom.io/terms/v7/type-List#Text": _cast_list_text,
+    "https://gedcom.io/terms/v7/type-Longitude": _cast_longitude,
     "https://gedcom.io/terms/v7/type-Name": _cast_personal_name,
+    "https://gedcom.io/terms/v7/type-TagDef": _cast_tag_definition,
     "https://gedcom.io/terms/v7/type-Time": _cast_time,
 }

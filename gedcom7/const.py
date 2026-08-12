@@ -2,6 +2,7 @@
 
 CONT = "CONT"
 HEAD = "HEAD"
+VOIDPTR = "@VOID@"
 ABBR = "ABBR"
 ADDR = "ADDR"
 ADOP = "ADOP"
@@ -218,7 +219,7 @@ payloads = {
     "https://gedcom.io/terms/v7/FAMS": "@<https://gedcom.io/terms/v7/record-FAM>@",
     "https://gedcom.io/terms/v7/FAX": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/FCOM": "Y|<NULL>",
-    "https://gedcom.io/terms/v7/FILE": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/FILE": "https://gedcom.io/terms/v7/type-FilePath",
     "https://gedcom.io/terms/v7/FORM": "http://www.w3.org/ns/dcat#mediaType",
     "https://gedcom.io/terms/v7/PLAC-FORM": "https://gedcom.io/terms/v7/type-List#Text",
     "https://gedcom.io/terms/v7/HEAD-PLAC-FORM": "https://gedcom.io/terms/v7/type-List#Text",
@@ -235,9 +236,9 @@ payloads = {
     "https://gedcom.io/terms/v7/LANG": "http://www.w3.org/2001/XMLSchema#Language",
     "https://gedcom.io/terms/v7/HEAD-LANG": "http://www.w3.org/2001/XMLSchema#Language",
     "https://gedcom.io/terms/v7/SUBM-LANG": "http://www.w3.org/2001/XMLSchema#Language",
-    "https://gedcom.io/terms/v7/LATI": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/LATI": "https://gedcom.io/terms/v7/type-Latitude",
     "https://gedcom.io/terms/v7/LEFT": "http://www.w3.org/2001/XMLSchema#nonNegativeInteger",
-    "https://gedcom.io/terms/v7/LONG": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/LONG": "https://gedcom.io/terms/v7/type-Longitude",
     "https://gedcom.io/terms/v7/MAP": "",
     "https://gedcom.io/terms/v7/MARB": "Y|<NULL>",
     "https://gedcom.io/terms/v7/MARC": "Y|<NULL>",
@@ -301,7 +302,7 @@ payloads = {
     "https://gedcom.io/terms/v7/SUBM": "@<https://gedcom.io/terms/v7/record-SUBM>@",
     "https://gedcom.io/terms/v7/record-SUBM": "",
     "https://gedcom.io/terms/v7/SURN": "http://www.w3.org/2001/XMLSchema#string",
-    "https://gedcom.io/terms/v7/TAG": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/TAG": "https://gedcom.io/terms/v7/type-TagDef",
     "https://gedcom.io/terms/v7/TEMP": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/TEXT": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/TIME": "https://gedcom.io/terms/v7/type-Time",
@@ -311,10 +312,10 @@ payloads = {
     "https://gedcom.io/terms/v7/NAME-TRAN": "https://gedcom.io/terms/v7/type-Name",
     "https://gedcom.io/terms/v7/PLAC-TRAN": "https://gedcom.io/terms/v7/type-List#Text",
     "https://gedcom.io/terms/v7/NOTE-TRAN": "http://www.w3.org/2001/XMLSchema#string",
-    "https://gedcom.io/terms/v7/FILE-TRAN": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/FILE-TRAN": "https://gedcom.io/terms/v7/type-FilePath",
     "https://gedcom.io/terms/v7/TYPE": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/NAME-TYPE": "https://gedcom.io/terms/v7/type-Enum",
-    "https://gedcom.io/terms/v7/EXID-TYPE": "http://www.w3.org/2001/XMLSchema#string",
+    "https://gedcom.io/terms/v7/EXID-TYPE": "http://www.w3.org/2001/XMLSchema#anyURI",
     "https://gedcom.io/terms/v7/UID": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/VERS": "http://www.w3.org/2001/XMLSchema#string",
     "https://gedcom.io/terms/v7/GEDC-VERS": "http://www.w3.org/2001/XMLSchema#string",

@@ -1,14 +1,25 @@
 ﻿0 HEAD
 1 GEDC
 2 VERS 7.0
+1 NOTE This file is intended to provide coverage of parts of the specification and does not contain meaningful historical or genealogical data.
+2 MIME text/plain
+2 LANG en-US
+2 TRAN Diese Datei soll Teile der Spezifikation abdecken und enthält keine aussagekräftigen historischen oder genealogischen Daten.
+3 LANG de
+2 SOUR @S1@
+3 PAGE 1
+2 SOUR @S1@
+3 PAGE 2
 1 SCHMA
 2 TAG _SKYPEID http://xmlns.com/foaf/0.1/skypeID
 2 TAG _JABBERID http://xmlns.com/foaf/0.1/jabberID
 1 SOUR https://gedcom.io/
-2 VERS 0.3
+2 VERS 0.4
 2 NAME GEDCOM Steering Committee
 2 CORP FamilySearch
-3 ADDR Family History Department, 15 East South Temple Street, Salt Lake City, UT 84150 USA
+3 ADDR Family History Department
+4 CONT 15 East South Temple Street
+4 CONT Salt Lake City, UT 84150 USA
 4 ADR1 Family History Department
 4 ADR2 15 East South Temple Street
 4 ADR3 Salt Lake City, UT 84150 USA
@@ -25,7 +36,7 @@
 3 WWW http://gedcom.io
 3 WWW http://gedcom.info
 2 DATA HEAD-SOUR-DATA
-3 DATE 27 MAR 2022
+3 DATE 1 NOV 2022
 4 TIME 8:38
 3 COPR copyright statement
 1 DEST https://gedcom.io/
@@ -36,14 +47,6 @@
 1 LANG en-US
 1 PLAC
 2 FORM City, County, State, Country
-1 NOTE American English
-2 MIME text/plain
-2 LANG en-GB
-2 TRAN British English
-2 SOUR @S1@
-3 PAGE 1
-2 SOUR @S1@
-3 PAGE 2
 0 @F1@ FAM
 1 RESN CONFIDENTIAL, LOCKED
 1 NCHI 2
@@ -198,8 +201,8 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID f096b664-5e40-40e2-bb72-c1664a46fe45
+1 UID 1f76f868-8a36-449c-af0d-a29247b3ab50
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
@@ -344,8 +347,8 @@
 3 PAGE 2
 2 OBJE @O1@
 2 OBJE @O2@
-2 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-2 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+2 UID 82092878-6f4f-4bca-ad59-d1ae87c5e521
+2 UID daf4b8c0-4141-42c4-bec8-01d1d818dfaf
 1 EMIG
 2 TYPE emig type
 1 FCOM
@@ -396,7 +399,10 @@
 3 PAGE 2
 1 NO EMIG
 1 BAPL
-2 STAT BIC
+2 STAT STILLBORN
+3 DATE 27 MAR 2022
+1 BAPL
+2 STAT SUBMITTED
 3 DATE 27 MAR 2022
 1 BAPL
 2 DATE 27 MAR 2022
@@ -423,7 +429,7 @@
 2 FAMC @VOID@
 1 SLGC
 2 PLAC Place
-2 STAT COMPLETED
+2 STAT BIC
 3 DATE 27 MAR 2022
 4 TIME 15:48
 2 NOTE Note text
@@ -486,13 +492,15 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID 3d75b5eb-36e9-40b3-b79f-f088b5c18595
+1 UID cb49c361-7124-447e-b587-4c6d36e51825
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
 2 TYPE http://example.com
-1 NOTE Note text
+1 NOTE me@example.com is an example email address.
+2 CONT @@me and @I are example social media handles.
+2 CONT @@@@@ has four @ characters where only the first is escaped.
 1 SNOTE @N1@
 1 SOUR @S1@
 2 PAGE 1
@@ -524,6 +532,10 @@
 1 FAMC @F1@
 0 @O1@ OBJE
 1 RESN CONFIDENTIAL, LOCKED
+1 FILE media/CharlotteBront%C3%AB.jpg
+2 FORM image/jpeg
+3 MEDI OTHER
+4 PHRASE Portrait
 1 FILE file:///path/to/file1
 2 FORM text/plain
 3 MEDI OTHER
@@ -540,16 +552,21 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID 69ebdd0e-c78c-4b81-873f-dc8ac30a48b9
+1 UID 79cae8c4-e673-4e4f-bc5d-13b02d931302
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
 2 TYPE http://example.com
 1 NOTE American English
 2 MIME text/plain
-2 LANG en-GB
+2 LANG en-US
 2 TRAN British English
+3 MIME text/plain
+3 LANG en-GB
+2 TRAN Canadian English
+3 MIME text/plain
+3 LANG en-CA
 2 SOUR @S1@
 3 PAGE 1
 2 SOUR @S2@
@@ -572,22 +589,23 @@
 3 ROLE OTHER
 4 PHRASE Role phrase
 2 QUAY 0
-2 OBJE @O1@
+2 OBJE @O3@
 3 CROP
 4 TOP 0
 4 LEFT 0
 4 HEIGHT 100
 4 WIDTH 100
 3 TITL Title
-2 OBJE @O1@
+2 OBJE @O3@
 3 CROP
 4 TOP 100
 4 LEFT 100
 3 TITL Title
 2 NOTE American English
 3 MIME text/plain
-3 LANG en-GB
+3 LANG en-US
 3 TRAN British English
+4 LANG en-GB
 3 SOUR @S1@
 4 PAGE 1
 3 SOUR @S2@
@@ -608,9 +626,16 @@
 1 FILE http://host.example.com/path/to/file2
 2 FORM text/plain
 3 MEDI ELECTRONIC
+0 @O3@ OBJE
+1 RESN PRIVACY
+1 FILE http://host.example.com/path/to/file3
+2 FORM text/plain
+3 MEDI ELECTRONIC
 0 @R1@ REPO
 1 NAME Repository 1
-1 ADDR Family History Department, 15 East South Temple Street, Salt Lake City, UT 84150 USA
+1 ADDR Family History Department
+2 CONT 15 East South Temple Street
+2 CONT Salt Lake City, UT 84150 USA
 2 ADR1 Family History Department
 2 ADR2 15 East South Temple Street
 2 ADR3 Salt Lake City, UT 84150 USA
@@ -632,8 +657,8 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID efa7885b-c806-4590-9f1b-247797e4c96d
+1 UID d530f6ab-cfd4-44cd-ab2c-e40bddb76bf8
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
@@ -665,8 +690,8 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID 6efbee0b-96a1-43ea-83c8-828ec71c54d7
+1 UID 4094d92a-5525-44ec-973d-6c527aa5535a
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
@@ -701,8 +726,9 @@
 5 TYPE http://example.com
 4 NOTE American English
 5 MIME text/plain
-5 LANG en-GB
+5 LANG en-US
 5 TRAN British English
+6 LANG en-GB
 5 SOUR @S1@
 6 PAGE 1
 5 SOUR @S2@
@@ -714,8 +740,9 @@
 2 AGNC Agency name
 2 NOTE American English
 3 MIME text/plain
-3 LANG en-GB
+3 LANG en-US
 3 TRAN British English
+4 LANG en-GB
 3 SOUR @S1@
 4 PAGE 1
 3 SOUR @S2@
@@ -759,16 +786,16 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID f065a3e8-5c03-4b4a-a89d-6c5e71430a8d
+1 UID 9441c3f3-74df-42b4-bbc1-fed42fd7f536
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
 2 TYPE http://example.com
 1 NOTE Note text
 1 SNOTE @N1@
-1 OBJE @O1@
 1 OBJE @O2@
+1 OBJE @O3@
 1 CHAN
 2 DATE 27 MAR 2022
 3 TIME 08:56
@@ -781,7 +808,9 @@
 1 TITL Source Two
 0 @U1@ SUBM
 1 NAME GEDCOM Steering Committee
-1 ADDR Family History Department, 15 East South Temple Street, Salt Lake City, UT 84150 USA
+1 ADDR Family History Department
+2 CONT 15 East South Temple Street
+2 CONT Salt Lake City, UT 84150 USA
 2 ADR1 Family History Department
 2 ADR2 15 East South Temple Street
 2 ADR3 Salt Lake City, UT 84150 USA
@@ -815,16 +844,17 @@
 2 TYPE User-generated identifier
 1 REFN 10
 2 TYPE User-generated identifier
-1 UID bbcc0025-34cb-4542-8cfb-45ba201c9c2c
-1 UID 9ead4205-5bad-4c05-91c1-0aecd3f5127d
+1 UID 24132fe0-26f6-4f87-9924-389a4f40f0ec
+1 UID b451c8df-5550-473b-a55c-ed31e65c60c8
 1 EXID 123
 2 TYPE http://example.com
 1 EXID 456
 2 TYPE http://example.com
 1 NOTE American English
 2 MIME text/plain
-2 LANG en-GB
+2 LANG en-US
 2 TRAN British English
+3 LANG en-GB
 2 SOUR @S1@
 3 PAGE 1
 2 SOUR @S2@

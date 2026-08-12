@@ -116,3 +116,17 @@ text = f'({anychar})*'
 special = f'{text}'
 time = f'(?P<hour>{hour}):(?P<minute>{minute})(:(?P<second>{second})(\\.(?P<fraction>{fraction}))?)?(?P<tz>Z)?'
 boolean = 'Y'
+upto8 = '[012345678]'
+upto90 = f'(90|({upto8})?[0-9])'
+latitude = f'(?P<direction>[nN]|[sS])(?P<degrees>{upto90}(\\.[0-9]+)?)'
+upto7 = '[01234567]'
+upto180 = f'(180|1{upto7}[0-9]|((0)?[0-9])?[0-9])'
+longitude = f'(?P<direction>[eE]|[wW])(?P<degrees>{upto180}(\\.[0-9]+)?)'
+# The spec defines TagDef as `extTag D URI-reference`, deferring URI-reference to
+# RFC 3986. Rather than inline the whole of RFC 3986 (including IPv6 literals),
+# this constrains the URI to the character repertoire RFC 3986 section 2 permits.
+unreserved_uri = '[a-zA-Z0-9\\-._~]'
+sub_delims_uri = "[!$&'()*+,;=]"
+gen_delims_uri = '[:/?#\\[\\]@]'
+uri_reference = f'({unreserved_uri}|{sub_delims_uri}|{gen_delims_uri}|%)*'
+tagdef = f'(?P<exttag>{exttag}){d}(?P<uri>{uri_reference})'

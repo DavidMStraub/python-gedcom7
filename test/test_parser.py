@@ -16,6 +16,8 @@ GEDCOM_EXTTAG = """0 HEAD
 0 @I1@ INDI
 1 ALIA @I2@
 1 _FOO 23
+0 @I2@ INDI
+1 SEX F
 0 TRLR
 """
 
@@ -34,15 +36,30 @@ def test_minimal() -> None:
     assert len(record.children) == 0
 
 
+def _count(structures: list[gedcom7.types.GedcomStructure]) -> int:
+    """Count structures recursively."""
+    return sum(1 + _count(s.children) for s in structures)
+
+
 def test_maximal() -> None:
+    """The official maximal70.ged must parse in full, with nothing dropped."""
     filename = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
     with open(filename, encoding="utf-8") as f:
-        gedcom7.loads(f.read())
+        text = f.read()
+    records = gedcom7.loads(text)
+
+    # Every non-blank line is either a structure or a CONT continuing one, so a
+    # silently skipped line would show up as a shortfall here.
+    lines = [line for line in text.split("\n") if line.strip()]
+    conts = [line for line in lines if line.split(" ")[1:2] == ["CONT"]]
+    assert _count(records) == len(lines) - len(conts)
+    assert records[0].tag == "HEAD"
+    assert records[-1].tag == "TRLR"
 
 
 def test_exttag() -> None:
     records = gedcom7.loads(GEDCOM_EXTTAG)
-    assert len(records) == 3
+    assert len(records) == 4
     assert records[1].children[1].tag == "http://example.com/placeholder"
 
 
