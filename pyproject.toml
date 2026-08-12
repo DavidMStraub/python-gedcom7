@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gedcom7"
-description = "GEDCOM 7 parser"
+description = "Read and write GEDCOM 7 genealogy files"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "David M. Straub", email = "straub@protonmail.com" }]
-keywords = ["gedcom", "gedcom7", "genealogy", "parser"]
+keywords = ["gedcom", "gedcom7", "genealogy", "parser", "serializer"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",

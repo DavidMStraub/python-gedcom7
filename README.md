@@ -5,11 +5,11 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/gedcom7)](https://pypi.org/project/gedcom7/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-A [GEDCOM 7](https://gedcom.io/) parser and serializer for Python.
+Read and write [GEDCOM 7](https://gedcom.io/) files in Python — a format for exchanging genealogical data between family history applications.
 
 ## Background
 
-The parser is based on regular expressions generated directly from the ABNF grammar via [`abnf-to-regexp`](https://github.com/aas-core-works/abnf-to-regexp), and on the structure and payload tables extracted from the specification. It targets FamilySearch GEDCOM [7.0.18](https://github.com/FamilySearch/GEDCOM/blob/main/specification/) and does not attempt to parse files that are not standards compliant.
+Reading and writing are both based on regular expressions generated directly from the ABNF grammar via [`abnf-to-regexp`](https://github.com/aas-core-works/abnf-to-regexp), and on the structure and payload tables extracted from the specification. The library targets FamilySearch GEDCOM [7.0.18](https://github.com/FamilySearch/GEDCOM/blob/main/specification/): it does not attempt to parse files that are not standards compliant, and raises rather than writing malformed lines.
 
 ## Installation
 
