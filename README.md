@@ -9,7 +9,7 @@ A [GEDCOM 7](https://gedcom.io/) parser and serializer for Python.
 
 ## Background
 
-The parser is based on regular expressions generated directly from the ABNF grammar via [`abnf-to-regexp`](https://github.com/aas-core-works/abnf-to-regexp), and on the structure and payload tables extracted from the specification. It targets FamilySearch GEDCOM [7.0.18](https://github.com/FamilySearch/GEDCOM/blob/main/specification/) and does not attempt to parse files that are not standards compliant: a data stream that violates the specification raises `GedcomParseError` rather than being silently misparsed.
+The parser is based on regular expressions generated directly from the ABNF grammar via [`abnf-to-regexp`](https://github.com/aas-core-works/abnf-to-regexp), and on the structure and payload tables extracted from the specification. It targets FamilySearch GEDCOM [7.0.18](https://github.com/FamilySearch/GEDCOM/blob/main/specification/) and does not attempt to parse files that are not standards compliant.
 
 ## Installation
 
@@ -22,16 +22,16 @@ python -m pip install gedcom7
 ```python
 import gedcom7
 
-with open("my_gedcom.ged", encoding="utf-8") as f:
-    records = gedcom7.loads(f.read())
+with open("my_gedcom.ged", "rb") as f:
+    records = gedcom7.load(f)
 
-with open("out.ged", "w", encoding="utf-8") as f:
+with open("out.ged", "wb") as f:
     gedcom7.dump(records, f)
 ```
 
-Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer`, the raw `text` payload, and `children`. Its `value` property casts the payload to the data type the specification gives that structure type, and `type_id` is the structure type URI, or `None` where the type is defined by an extension.
+Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer`, the raw `text` payload, and `children`. Its `value` property casts the payload to the data type the specification gives that structure type.
 
-Serializing is the exact inverse of parsing, so `dumps(loads(text)) == text` holds byte for byte for a conforming file. `GedcomParseError` and `GedcomSerializeError` both subclass `ValueError`; parse errors carry `line_number` and `line`.
+`loads` and `dumps` are the string equivalents. Non-conforming input raises `GedcomParseError`, a `ValueError` carrying `line_number`.
 
 ## Development
 

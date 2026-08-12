@@ -3,7 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from .exceptions import GedcomError, GedcomParseError, GedcomSerializeError
-from .parser import loads
+from .parser import load, loads
 from .serializer import dump, dumps
 
 __all__ = [
@@ -12,6 +12,7 @@ __all__ = [
     "GedcomSerializeError",
     "dump",
     "dumps",
+    "load",
     "loads",
 ]
 

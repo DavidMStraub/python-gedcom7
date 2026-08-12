@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from . import const, grammar
 from .exceptions import GedcomParseError
 from .types import GedcomStructure
+
+if TYPE_CHECKING:
+    from typing import BinaryIO
 
 # EOL = %x0D [%x0A] / %x0A -- CR-LF, CR, or LF
 _EOL = re.compile(r"\r\n|\r|\n")
@@ -26,6 +30,25 @@ def _unescape(linestr: str) -> str:
     ``@@@@``, not to ``@@``.
     """
     return linestr[1:] if linestr.startswith("@@") else linestr
+
+
+def load(fp: BinaryIO) -> list[GedcomStructure]:
+    """Load a GEDCOM 7 dataset from a binary file object.
+
+    The file must be opened in binary mode, e.g. ``open(path, "rb")``. GEDCOM 7
+    data streams are always UTF-8, and reading the bytes directly avoids the
+    encoding guesswork and newline translation that text mode would apply.
+    """
+    data = fp.read()
+    try:
+        string = data.decode("utf-8")
+    except AttributeError:
+        raise TypeError(
+            'File must be opened in binary mode, e.g. use `open("my.ged", "rb")`'
+        ) from None
+    except UnicodeDecodeError as exc:
+        raise GedcomParseError(f"data stream is not valid UTF-8: {exc}") from exc
+    return loads(string)
 
 
 def loads(string: str) -> list[GedcomStructure]:

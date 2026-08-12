@@ -130,13 +130,76 @@ def test_leading_at_is_escaped() -> None:
     assert "1 NOTE a@b\n" in gedcom7.dumps(records, byte_order_mark=False)
 
 
-def test_dump_writes_to_a_file_object() -> None:
-    """dump() mirrors dumps() but writes to a stream."""
+def test_dump_writes_to_a_binary_file_object() -> None:
+    """dump() mirrors dumps() but writes UTF-8 bytes to a stream."""
     text = HEAD + "0 @I1@ INDI\n1 SEX M\n" + TRLR
     records = gedcom7.loads(text)
-    buffer = io.StringIO()
+    buffer = io.BytesIO()
     gedcom7.dump(records, buffer, byte_order_mark=False)
-    assert buffer.getvalue() == text
+    assert buffer.getvalue() == text.encode("utf-8")
+
+
+def test_load_reads_a_binary_file_object() -> None:
+    """load() mirrors loads() but reads UTF-8 bytes from a stream."""
+    text = HEAD + "0 @I1@ INDI\n1 SEX M\n" + TRLR
+    buffer = io.BytesIO(text.encode("utf-8"))
+    assert gedcom7.load(buffer) == gedcom7.loads(text)
+
+
+def test_text_mode_is_rejected() -> None:
+    """Text streams would re-encode and rewrite terminators, so they are refused."""
+    records = gedcom7.loads(HEAD + TRLR)
+    with pytest.raises(TypeError, match="binary mode"):
+        gedcom7.dump(records, io.StringIO())  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="binary mode"):
+        gedcom7.load(io.StringIO(HEAD + TRLR))  # type: ignore[arg-type]
+
+
+def test_dump_writes_nothing_to_a_text_stream() -> None:
+    """The type error must arrive before any output is produced."""
+    buffer = io.StringIO()
+    with pytest.raises(TypeError):
+        gedcom7.dump(gedcom7.loads(HEAD + TRLR), buffer)  # type: ignore[arg-type]
+    assert buffer.getvalue() == ""
+
+
+def test_invalid_utf8_rejected() -> None:
+    """GEDCOM 7 data streams are always UTF-8."""
+    with pytest.raises(gedcom7.GedcomParseError, match="not valid UTF-8"):
+        gedcom7.load(io.BytesIO(b"0 HEAD\n1 NOTE \xff\xfe\n0 TRLR\n"))
+
+
+@pytest.mark.parametrize("eol", ["\n", "\r\n", "\r"])
+def test_file_roundtrip_preserves_terminators(eol: str, tmp_path: pathlib.Path) -> None:
+    """Going through the filesystem must not rewrite the line terminators.
+
+    Text mode would translate "\\n" to os.linesep on Windows, turning an
+    explicit "\\r\\n" into "\\r\\r\\n" and producing a file this library rejects.
+    """
+    source = (HEAD + "0 @I1@ INDI\n1 SEX M\n" + TRLR).replace("\n", eol)
+    path = tmp_path / "out.ged"
+
+    with open(path, "wb") as f:
+        gedcom7.dump(
+            gedcom7.loads(source), f, line_terminator=eol, byte_order_mark=False
+        )
+
+    assert path.read_bytes() == source.encode("utf-8")
+    with open(path, "rb") as f:
+        assert gedcom7.load(f) == gedcom7.loads(source)
+
+
+def test_official_file_roundtrips_through_the_filesystem(
+    tmp_path: pathlib.Path,
+) -> None:
+    """load() and dump() reproduce a real file byte for byte."""
+    source = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
+    path = tmp_path / "out.ged"
+    with open(source, "rb") as f:
+        records = gedcom7.load(f)
+    with open(path, "wb") as f:
+        gedcom7.dump(records, f)
+    assert path.read_bytes() == source.read_bytes()
 
 
 def test_levels_derive_from_the_tree() -> None:

@@ -10,7 +10,7 @@ from .exceptions import GedcomSerializeError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import IO
+    from typing import BinaryIO
 
     from .types import GedcomStructure
 
@@ -148,16 +148,25 @@ def dumps(
 
 def dump(
     records: Iterable[GedcomStructure],
-    fp: IO[str],
+    fp: BinaryIO,
     *,
     line_terminator: str = "\n",
     byte_order_mark: bool = True,
 ) -> None:
-    """Serialize structures to a text file opened with ``encoding="utf-8"``."""
-    fp.write(
-        dumps(
-            records,
-            line_terminator=line_terminator,
-            byte_order_mark=byte_order_mark,
-        )
-    )
+    """Serialize structures to a binary file object.
+
+    The file must be opened in binary mode, e.g. ``open(path, "wb")``. GEDCOM 7
+    data streams are always UTF-8, and writing the bytes directly keeps text
+    mode from re-encoding them or rewriting the line terminators.
+    """
+    data = dumps(
+        records,
+        line_terminator=line_terminator,
+        byte_order_mark=byte_order_mark,
+    ).encode("utf-8")
+    try:
+        fp.write(data)
+    except TypeError:
+        raise TypeError(
+            'File must be opened in binary mode, e.g. use `open("my.ged", "wb")`'
+        ) from None
