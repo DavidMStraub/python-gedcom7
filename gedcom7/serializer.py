@@ -21,7 +21,7 @@ _POINTER = re.compile(grammar.pointer)
 _BANNED = re.compile(grammar.banned)
 _TAGDEF = re.compile(grammar.tagdef)
 
-_BOM = "﻿"
+_BOM = "\ufeff"
 
 
 def _escape(linestr: str) -> str:
@@ -122,7 +122,8 @@ def dumps(
 
     The specification says a data stream should begin with U+FEFF, so a byte
     order mark is included by default; pass ``byte_order_mark=False`` to omit it.
-    Write the result with ``encoding="utf-8"``, not ``"utf-8-sig"``.
+    Use :func:`dump` to write to a file, so that the encoding and the line
+    terminators are not altered on the way out.
 
     Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the structures
     cannot be encoded as conforming lines.

@@ -37,7 +37,7 @@ Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer
 
 ```
 python -m pip install --group dev --editable .
-pytest && mypy && ruff check .
+pytest && mypy && ruff check . && ruff format --check .
 ```
 
 The version is derived from git tags by [setuptools-scm](https://setuptools-scm.readthedocs.io/). To release, push a `vX.Y.Z` tag and publish a GitHub release for it.

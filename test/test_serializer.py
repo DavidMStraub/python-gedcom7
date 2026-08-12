@@ -75,7 +75,7 @@ def test_extension_tag_roundtrips_through_the_schema() -> None:
 def test_byte_order_mark_included_by_default() -> None:
     """The specification says a data stream should begin with U+FEFF."""
     out = gedcom7.dumps(gedcom7.loads(HEAD + TRLR))
-    assert out.startswith("﻿")
+    assert out.startswith("\ufeff")
     assert gedcom7.dumps(gedcom7.loads(HEAD + TRLR), byte_order_mark=False) == (
         HEAD + TRLR
     )

@@ -19,7 +19,7 @@ _BANNED = re.compile(grammar.banned)
 _TAGDEF = re.compile(grammar.tagdef)
 
 # U+FEFF, the byte-order mark, may open a data stream and carries no meaning
-_BOM = "﻿"
+_BOM = "\ufeff"
 
 
 def _unescape(linestr: str) -> str:
