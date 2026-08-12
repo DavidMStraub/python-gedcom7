@@ -18,7 +18,10 @@ class GedcomStructure:
     text: str
     xref: str | None
     children: list[GedcomStructure] = field(default_factory=list)
-    parent: GedcomStructure | None = None
+    # Excluded from comparison and repr: it points back up the tree, so including
+    # it would make __eq__ recurse endlessly and __repr__ print every ancestor.
+    # A structure's superstructure is implied by its position in the tree.
+    parent: GedcomStructure | None = field(default=None, compare=False, repr=False)
 
     @property
     def type_id(self) -> str | None:

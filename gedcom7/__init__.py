@@ -2,10 +2,19 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from .exceptions import GedcomError, GedcomParseError
-from .parser import loads
+from .exceptions import GedcomError, GedcomParseError, GedcomSerializeError
+from .parser import load, loads
+from .serializer import dump, dumps
 
-__all__ = ["GedcomError", "GedcomParseError", "loads"]
+__all__ = [
+    "GedcomError",
+    "GedcomParseError",
+    "GedcomSerializeError",
+    "dump",
+    "dumps",
+    "load",
+    "loads",
+]
 
 try:
     __version__ = version("gedcom7")

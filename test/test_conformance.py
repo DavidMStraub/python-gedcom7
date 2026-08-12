@@ -36,7 +36,7 @@ def test_line_terminators(eol: str) -> None:
 
 def test_byte_order_mark_is_ignored() -> None:
     """The data stream should begin with U+FEFF, which carries no meaning."""
-    records = gedcom7.loads("﻿" + HEAD + TRLR)
+    records = gedcom7.loads("\ufeff" + HEAD + TRLR)
     assert records[0].tag == "HEAD"
 
 
