@@ -7,6 +7,10 @@ class GedcomError(Exception):
     """Base class for all errors raised by this package."""
 
 
+class GedcomSerializeError(GedcomError, ValueError):
+    """Raised when structures cannot be encoded as a conforming data stream."""
+
+
 class GedcomParseError(GedcomError, ValueError):
     """Raised when a data stream does not conform to the GEDCOM 7 grammar.
 
