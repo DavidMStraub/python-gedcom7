@@ -110,10 +110,11 @@ def test_cast_time() -> None:
 
 
 def test_cast_time_preserves_fraction_width() -> None:
-    """The fraction is kept verbatim so distinct instants stay distinct.
+    """The fraction is kept verbatim, digits as written.
 
-    Casting to an integer would collapse ".05" and ".5" onto 5, and neither the
-    datetime conversion nor a serializer could tell them apart afterwards.
+    Leading zeros are part of the value, so ".05" and ".5" are different
+    instants. Trailing zeros do not change the value but do belong to the
+    payload, so they are preserved as well.
     """
     assert cast._cast_time("13:15:12.05").fraction == "05"
     assert cast._cast_time("13:15:12.5").fraction == "5"

@@ -141,7 +141,7 @@ def test_time_with_fraction() -> None:
 
 
 def test_time_fraction_leading_zero_is_significant() -> None:
-    """".05" is 50 ms, not 500 ms; the width of the fraction carries meaning."""
+    """A leading zero scales the fraction: ".05" is 50 ms, not 500 ms."""
     gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="05")
     assert util.time_to_python_time(gedcom_time).microsecond == 50000
 
