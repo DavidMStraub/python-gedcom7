@@ -83,7 +83,10 @@ class Time:
     hour: int
     minute: int
     second: int | None = None
-    fraction: int | None = None
+    # The digits after the decimal point, kept verbatim: their width is
+    # significant, so ".05" and ".5" are different instants. Parsing them as an
+    # integer would map both to 5.
+    fraction: str | None = None
     tz: Literal["Z"] | None = None
 
 
