@@ -83,7 +83,11 @@ class Time:
     hour: int
     minute: int
     second: int | None = None
-    fraction: int | None = None
+    # The digits after the decimal point, kept verbatim. Leading zeros are part
+    # of the value: ".05" and ".5" are different instants. Trailing zeros are
+    # not, but they belong to the payload, so keeping the digits as written
+    # preserves those too.
+    fraction: str | None = None
     tz: Literal["Z"] | None = None
 
 

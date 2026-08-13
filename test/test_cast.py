@@ -88,7 +88,7 @@ def test_cast_time() -> None:
         hour=13,
         minute=15,
         second=12,
-        fraction=246,
+        fraction="246",
         tz=None,
     )
     assert cast._cast_time("13:15Z") == types.Time(
@@ -102,11 +102,24 @@ def test_cast_time() -> None:
         hour=13,
         minute=15,
         second=12,
-        fraction=246,
+        fraction="246",
         tz="Z",
     )
     with pytest.raises(ValueError):
         cast._cast_time("13:15A")  # Invalid timezone, should be Z
+
+
+def test_cast_time_preserves_fraction_width() -> None:
+    """The fraction is kept verbatim, digits as written.
+
+    Leading zeros are part of the value, so ".05" and ".5" are different
+    instants. Trailing zeros do not change the value but do belong to the
+    payload, so they are preserved as well.
+    """
+    assert cast._cast_time("13:15:12.05").fraction == "05"
+    assert cast._cast_time("13:15:12.5").fraction == "5"
+    assert cast._cast_time("13:15:12.500").fraction == "500"
+    assert cast._cast_time("13:15:12.05") != cast._cast_time("13:15:12.5")
 
 
 def test_cast_age() -> None:

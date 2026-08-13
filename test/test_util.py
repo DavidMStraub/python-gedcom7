@@ -126,18 +126,27 @@ def test_time_with_seconds() -> None:
 
 def test_time_with_fraction() -> None:
     """Test time conversion with fractional seconds."""
-    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123456)
+    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="123456")
     python_time = util.time_to_python_time(gedcom_time)
 
     assert python_time.second == 45
     assert python_time.microsecond == 123456
 
     # Test with different fraction lengths
-    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=5)
+    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="5")
     python_time = util.time_to_python_time(gedcom_time)
 
     assert python_time.second == 45
     assert python_time.microsecond == 500000
+
+
+def test_time_fraction_leading_zero_is_significant() -> None:
+    """A leading zero scales the fraction: ".05" is 50 ms, not 500 ms."""
+    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="05")
+    assert util.time_to_python_time(gedcom_time).microsecond == 50000
+
+    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="5")
+    assert util.time_to_python_time(gedcom_time).microsecond == 500000
 
 
 def test_time_without_fraction_or_seconds() -> None:
@@ -168,7 +177,7 @@ def test_date_only() -> None:
 def test_date_and_time() -> None:
     """Test conversion with both date and time."""
     gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
-    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123)
+    gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="123")
 
     python_datetime = util.date_exact_and_time_to_python_datetime(
         gedcom_date, gedcom_time
@@ -197,7 +206,7 @@ def test_integration_with_other_functions() -> None:
         )
 
         gedcom_date = types.DateExact(day=15, month="JAN", year=2023)
-        gedcom_time = types.Time(hour=14, minute=30, second=45, fraction=123)
+        gedcom_time = types.Time(hour=14, minute=30, second=45, fraction="123")
 
         util.date_exact_and_time_to_python_datetime(gedcom_date, gedcom_time)
 

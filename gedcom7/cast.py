@@ -79,7 +79,8 @@ def _cast_time(value: str) -> types.Time:
         hour=int(match.group("hour")),
         minute=int(match.group("minute")),
         second=int(match.group("second")) if match.group("second") else None,
-        fraction=int(match.group("fraction")) if match.group("fraction") else None,
+        # kept as a string: see the note on Time.fraction
+        fraction=match.group("fraction"),
     )
 
 
