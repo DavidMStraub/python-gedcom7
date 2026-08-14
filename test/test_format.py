@@ -529,14 +529,31 @@ def test_formatting_is_the_inverse_of_casting(type_id: str, text: str) -> None:
 def test_casting_is_the_inverse_of_formatting(type_id: str, text: str) -> None:
     """Casting a formatted value gives the value back.
 
-    This is the direction that is exact for every data type. Casting a payload
-    is what discards detail, so once a value has been through it the pair is a
-    true inverse, PersonalName included.
+    This is the direction that is exact for every value that came from casting a
+    payload, PersonalName included: casting is what discards detail, so once a
+    value has been through it the pair is a true inverse. The empty payload is
+    the exception, and test_empty_payload_does_not_round_trip pins it.
     """
     value = gedcom7.cast.cast_value(text, type_id)
     formatted = gedcom7.format_value(value, type_id)
     assert formatted is not None
     assert gedcom7.cast.cast_value(formatted, type_id) == value
+
+
+def test_empty_payload_does_not_round_trip() -> None:
+    """Casting maps every empty payload to None, whatever data type it belongs to.
+
+    So an empty DatePeriod, which is a legal date period, formats to "" and casts
+    back to None rather than to DatePeriod(). Nothing is lost by it: a structure
+    written with an empty payload and one written with no payload are the same
+    line, so the two spellings are not distinguishable in a data stream to begin
+    with. Preserving them instead would mean casting an empty Y|<NULL> to False,
+    which would read "1 DEAT" with no payload as an assertion that the death did
+    not happen, the opposite of what it means.
+    """
+    assert gedcom7.format_value(types.DatePeriod(), V7 + "NO-DATE") == ""
+    assert gedcom7.cast.cast_value("", V7 + "NO-DATE") is None
+    assert gedcom7.cast.cast_value("", V7 + "DEAT") is None
 
 
 def test_round_trip_covers_every_data_type() -> None:
@@ -560,7 +577,13 @@ CORPUS_NORMALIZATIONS = {
 
 
 def test_every_corpus_payload_round_trips() -> None:
-    """Format every payload in maximal70.ged and compare against the original."""
+    """Format every text payload in maximal70.ged and compare with the original.
+
+    Structures with no text are left out, which is not the same as leaving out
+    nothing: most of them point at a record rather than carrying a value, and
+    format_value refuses those by design. The rest have an empty payload, which
+    casting maps to None, so there is no value to format and nothing to compare.
+    """
     filename = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
     records = gedcom7.loads(filename.read_text(encoding="utf-8"))
 
