@@ -628,3 +628,113 @@ def test_every_corpus_payload_round_trips() -> None:
     assert not unexpected
     # a guard against the sweep quietly stopping to visit anything
     assert formatted > 600
+
+
+# --------------------------------------------------------------------------
+# set_value
+# --------------------------------------------------------------------------
+
+
+def test_set_value_uses_the_superstructure_to_find_the_data_type() -> None:
+    """R2: an attached structure knows its own structure type."""
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    birth = types.GedcomStructure(tag="BIRT")
+    individual.append_child(birth)
+    date = types.GedcomStructure(tag="DATE")
+    birth.append_child(date)
+
+    gedcom7.set_value(date, types.Date(day=1, month="JAN", year=2000))
+    assert date.text == "1 JAN 2000"
+    assert date.value == types.Date(day=1, month="JAN", year=2000)
+
+
+def test_set_value_accepts_an_explicit_structure_type() -> None:
+    """R1: naming the structure type works before the structure is attached."""
+    date = types.GedcomStructure(tag="DATE")
+    gedcom7.set_value(
+        date,
+        types.Date(day=1, month="JAN", year=2000),
+        type_id="https://gedcom.io/terms/v7/DATE",
+    )
+    assert date.text == "1 JAN 2000"
+
+
+def test_set_value_explicit_type_id_wins_over_the_superstructure() -> None:
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    child = types.GedcomStructure(tag="DATE")
+    individual.append_child(child)
+    gedcom7.set_value(
+        child, types.Time(hour=13, minute=15), type_id="https://gedcom.io/terms/v7/TIME"
+    )
+    assert child.text == "13:15"
+
+
+def test_set_value_on_an_unattached_structure_says_so() -> None:
+    """V5: the common way to get this wrong is to build the tree upwards."""
+    date = types.GedcomStructure(tag="DATE")
+    assert date.type_id is None
+    with pytest.raises(gedcom7.GedcomSerializeError, match="superstructure"):
+        gedcom7.set_value(date, types.Date(day=1, month="JAN", year=2000))
+
+
+def test_set_value_of_a_string_where_no_standard_type_applies() -> None:
+    """V4: an extension payload is carried as it stands, as the getter returns it."""
+    structure = types.GedcomStructure(tag="_MYTAG")
+    assert structure.type_id is None
+    gedcom7.set_value(structure, "whatever the extension means")
+    assert structure.text == "whatever the extension means"
+    assert structure.value == "whatever the extension means"
+
+
+def test_set_value_of_false_cannot_empty_the_payload() -> None:
+    """V2: the specification writes a false Y|<NULL> by omitting the structure."""
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    death = types.GedcomStructure(tag="DEAT")
+    individual.append_child(death)
+
+    gedcom7.set_value(death, True)
+    assert death.text == "Y"
+    with pytest.raises(gedcom7.GedcomSerializeError, match="leaving the structure out"):
+        gedcom7.set_value(death, False)
+
+
+def test_set_value_propagates_a_value_that_cannot_be_written() -> None:
+    """V3: format_value does the validating, and its refusals reach the caller."""
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    birth = types.GedcomStructure(tag="BIRT")
+    individual.append_child(birth)
+    date = types.GedcomStructure(tag="DATE")
+    birth.append_child(date)
+
+    with pytest.raises(gedcom7.GedcomSerializeError):
+        gedcom7.set_value(date, types.Date(day=1, year=2000))
+
+
+def test_set_value_round_trips_through_the_serializer() -> None:
+    """A tree built with set_value alone serializes and parses back unchanged."""
+    head = types.GedcomStructure(tag="HEAD")
+    gedc = types.GedcomStructure(tag="GEDC")
+    head.append_child(gedc)
+    vers = types.GedcomStructure(tag="VERS")
+    gedc.append_child(vers)
+    gedcom7.set_value(vers, "7.0")
+
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    name = types.GedcomStructure(tag="NAME")
+    individual.append_child(name)
+    gedcom7.set_value(
+        name, types.PersonalName(fullname="John Doe", given="John", surname="Doe")
+    )
+    birth = types.GedcomStructure(tag="BIRT")
+    individual.append_child(birth)
+    date = types.GedcomStructure(tag="DATE")
+    birth.append_child(date)
+    gedcom7.set_value(date, types.Date(day=1, month="JAN", year=2000))
+
+    trlr = types.GedcomStructure(tag="TRLR")
+    text = gedcom7.dumps([head, individual, trlr], byte_order_mark=False)
+    assert text == (
+        "0 HEAD\n1 GEDC\n2 VERS 7.0\n0 @I1@ INDI\n1 NAME John /Doe/\n"
+        "1 BIRT\n2 DATE 1 JAN 2000\n0 TRLR\n"
+    )
+    assert gedcom7.loads(text) == [head, individual, trlr]

@@ -106,3 +106,32 @@ def test_parent_links() -> None:
     assert indi.parent is None
     assert indi.children[0].parent is indi
     assert indi.children[0].children[0].parent is indi.children[0]
+
+
+# --------------------------------------------------------------------------
+# Constructor defaults
+# --------------------------------------------------------------------------
+
+
+def test_structure_needs_only_a_tag() -> None:
+    """A writer builds these by the thousand, so only the tag is required."""
+    structure = types.GedcomStructure(tag="GIVN")
+    assert structure.pointer is None
+    assert structure.text == ""
+    assert structure.xref is None
+    assert structure.children == []
+    assert structure.parent is None
+
+
+def test_structure_still_takes_every_field_positionally() -> None:
+    """Defaulting the fields must not move them, so old calls keep working."""
+    structure = types.GedcomStructure("NAME", None, "John /Doe/", None)
+    assert structure == types.GedcomStructure(
+        tag="NAME", pointer=None, text="John /Doe/", xref=None
+    )
+
+
+def test_structure_children_are_not_shared_between_instances() -> None:
+    first = types.GedcomStructure(tag="INDI")
+    first.append_child(types.GedcomStructure(tag="SEX", text="M"))
+    assert types.GedcomStructure(tag="INDI").children == []

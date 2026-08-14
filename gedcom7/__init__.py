@@ -3,7 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from .exceptions import GedcomError, GedcomParseError, GedcomSerializeError
-from .format import format_value
+from .format import format_value, set_value
 from .parser import load, loads
 from .serializer import dump, dumps
 
@@ -16,6 +16,7 @@ __all__ = [
     "format_value",
     "load",
     "loads",
+    "set_value",
 ]
 
 try:
