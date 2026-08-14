@@ -450,6 +450,24 @@ def test_every_pointer_structure_type_is_refused() -> None:
                 gedcom7.format_value("@I1@", type_id)
 
 
+def test_every_payload_in_the_specification_is_accounted_for() -> None:
+    """No kind of payload may reach format_value without a deliberate decision.
+
+    The fallback treats a payload it does not recognise as plain text. That is
+    right for the string-like types and was silently wrong for the pointer types,
+    which reached it for as long as nothing enumerated what the specification
+    actually contains. Partitioning the whole table makes a payload kind added by
+    a later version of the specification fail here rather than fall through.
+    """
+    for payload in set(const.payloads.values()):
+        accounted_for = (
+            payload == ""
+            or payload in format.FORMAT_FUNCTIONS
+            or (payload.startswith("@<") and payload.endswith(">@"))
+        )
+        assert accounted_for, f"{payload} would fall through to plain text"
+
+
 def test_format_value_empty_payload_is_not_no_payload() -> None:
     """An empty date period is a payload, and is not the same as None."""
     empty = gedcom7.format_value(types.DatePeriod(), V7 + "NO-DATE")
