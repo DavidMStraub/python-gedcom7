@@ -113,7 +113,13 @@ def _format_enum(value: object) -> str:
 
 
 def _format_list_enum(value: object) -> str:
-    """Format a list of enumeration values."""
+    """Format a list of enumeration values.
+
+    Unlike a list of text, the items are not stripped. An enumeration value may
+    not contain a space at all, so one that arrives with a space is not a value
+    needing tidying but a value from outside the vocabulary, and it is refused
+    here exactly as :func:`_format_enum` refuses it on its own.
+    """
     items = [_expect(item, str, "List:Enum") for item in _expect(value, list, "List")]
     return _check(", ".join(items), grammar.list_enum, "List:Enum")
 
@@ -186,8 +192,17 @@ def _format_degrees(degrees: float) -> str:
     ``str`` renders small magnitudes in exponent notation, which no coordinate
     payload may contain, so the number is rendered through :class:`~decimal.Decimal`
     instead.
+
+    A trailing zero after the decimal point comes from the float rather than from
+    the coordinate, and casting has already discarded which of "N90" and "N90.0"
+    was written, so the shorter spelling is chosen for both. Dropping it also
+    keeps a whole number of degrees from depending on whether the caller happened
+    to hold it as an int or a float.
     """
-    return format(decimal.Decimal(repr(abs(degrees))), "f")
+    text = format(decimal.Decimal(repr(abs(degrees))), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
 
 
 def _expect_degrees(value: object, type_name: str, limit: int) -> float:

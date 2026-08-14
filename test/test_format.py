@@ -29,12 +29,17 @@ BAPL = "https://gedcom.io/terms/v7/BAPL"
         (1e-05, "N0.00001"),
         (-1e-05, "S0.00001"),
         (1.5e-07, "N0.00000015"),
-        (0.0, "N0.0"),
-        (-0.0, "N0.0"),
-        (0, "N0"),
-        (90, "N90"),
-        (-90, "S90"),
         (51.5, "N51.5"),
+        # casting returns a float even for a whole number of degrees, so the
+        # spelling must not depend on which of the two the caller holds
+        (0, "N0"),
+        (0.0, "N0"),
+        (-0.0, "N0"),
+        (90, "N90"),
+        (90.0, "N90"),
+        (-90, "S90"),
+        (-90.0, "S90"),
+        (51.0, "N51"),
     ],
 )
 def test_format_latitude(degrees: float, expected: str) -> None:
@@ -48,7 +53,11 @@ def test_format_latitude(degrees: float, expected: str) -> None:
         (-168.150944, "W168.150944"),
         (-1e-05, "W0.00001"),
         (180, "E180"),
+        (180.0, "E180"),
         (-180, "W180"),
+        (-180.0, "W180"),
+        (0.0, "E0"),
+        (168.0, "E168"),
     ],
 )
 def test_format_longitude(degrees: float, expected: str) -> None:
@@ -342,6 +351,18 @@ def test_format_list_enum() -> None:
     assert format._format_list_enum(["BIRT", "DEAT"]) == "BIRT, DEAT"
 
 
+def test_format_list_enum_does_not_strip_items() -> None:
+    """An enum cannot contain a space, so a spaced item is outside the vocabulary.
+
+    A list of text is stripped instead, because there the space really is only
+    padding around a delimiter.
+    """
+    with pytest.raises(GedcomSerializeError):
+        format._format_list_enum([" BIRT", "DEAT"])
+    with pytest.raises(GedcomSerializeError):
+        format._format_enum(" BIRT")
+
+
 def test_format_enum() -> None:
     assert format._format_enum("ADOPTED") == "ADOPTED"
     assert format._format_enum("0") == "0"
@@ -458,8 +479,13 @@ ROUND_TRIP = [
     (V7 + "FILE", "media/original.mp3"),
     (V7 + "LATI", "N18.150944"),
     (V7 + "LATI", "S0.00001"),
+    # a whole number of degrees casts to a float, and must not come back "N90.0"
+    (V7 + "LATI", "N90"),
+    (V7 + "LATI", "N0"),
+    (V7 + "LATI", "S51"),
     (V7 + "LONG", "E168.150944"),
     (V7 + "LONG", "W0.00001"),
+    (V7 + "LONG", "E180"),
     (V7 + "DATA-EVEN", "BIRT, DEAT"),
     (V7 + "PLAC-FORM", "City, County, State"),
     (V7 + "INDI-NAME", "John /Doe/ Jr."),
