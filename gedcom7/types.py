@@ -14,9 +14,9 @@ class GedcomStructure:
 
     tag: str
     # absent for a line without a pointer payload / without a cross-reference id
-    pointer: str | None
-    text: str
-    xref: str | None
+    pointer: str | None = None
+    text: str = ""
+    xref: str | None = None
     children: list[GedcomStructure] = field(default_factory=list)
     # Excluded from comparison and repr: it points back up the tree, so including
     # it would make __eq__ recurse endlessly and __repr__ print every ancestor.

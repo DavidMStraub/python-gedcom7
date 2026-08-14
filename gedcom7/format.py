@@ -62,6 +62,52 @@ def format_value(value: types.DataType | None, type_id: str) -> str | None:
     return format_function(value)
 
 
+def set_value(
+    structure: types.GedcomStructure,
+    value: types.DataType,
+    type_id: str | None = None,
+) -> None:
+    """Set a structure's payload from a value of its structure type's data type.
+
+    The counterpart of :attr:`~gedcom7.types.GedcomStructure.value`, which reads
+    a payload back. Reading is a property of a structure the parser has already
+    built; writing is something a writer does to one, which is why this is a
+    function here rather than a method there.
+
+    Which data type applies follows from the structure type, and a structure only
+    has one once it sits under its superstructure, since that is what gives its
+    tag a meaning. Building a tree from the leaves up therefore means attaching a
+    structure before setting its value, or naming the structure type here. Where
+    no standard type applies the payload is carried uninterpreted, exactly as the
+    reader returns it, so a string is set as it stands and anything else is
+    refused.
+
+    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value cannot
+    be written as a payload, which includes a false ``Y|<NULL>``: the
+    specification expresses that by leaving the structure out, and removing a
+    structure from its superstructure is the caller's to do.
+    """
+    resolved = type_id if type_id is not None else structure.type_id
+    if resolved is None:
+        if not isinstance(value, str):
+            raise GedcomSerializeError(
+                f"no standard structure type applies to {structure.tag}, so a "
+                f"{type(value).__name__} cannot be formatted for it. Attach the "
+                "structure to its superstructure before setting a value, or name "
+                "the structure type with type_id"
+            )
+        structure.text = value
+        return
+    formatted = format_value(value, resolved)
+    if formatted is None:
+        raise GedcomSerializeError(
+            f"{value!r} is written by leaving the structure out rather than by "
+            f"giving it a payload, so it cannot be set on {structure.tag}; "
+            "remove the structure from its superstructure instead"
+        )
+    structure.text = formatted
+
+
 def _expect(value: object, expected: type[_T], type_name: str) -> _T:
     """Return the value if it is the type the structure type calls for."""
     if not isinstance(value, expected):
