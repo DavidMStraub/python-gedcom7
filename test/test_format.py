@@ -7,6 +7,7 @@ import pytest
 import gedcom7
 from gedcom7 import GedcomSerializeError, const, format, types
 
+V7 = "https://gedcom.io/terms/v7/"
 LATI = "https://gedcom.io/terms/v7/LATI"
 TIME = "https://gedcom.io/terms/v7/TIME"
 ABBR = "https://gedcom.io/terms/v7/ABBR"
@@ -434,6 +435,28 @@ def test_format_value_structure_taking_no_payload() -> None:
         gedcom7.format_value("x", BAPL)
 
 
+@pytest.mark.parametrize("type_id", [V7 + "ALIA", V7 + "FAMS", V7 + "HUSB"])
+def test_format_value_structure_pointing_at_a_record(type_id: str) -> None:
+    """A pointer written as text would be escaped, turning a link into a string."""
+    with pytest.raises(GedcomSerializeError):
+        gedcom7.format_value("@I1@", type_id)
+
+
+def test_every_pointer_structure_type_is_refused() -> None:
+    """No structure type pointing at a record may fall through to plain text."""
+    for type_id, payload in const.payloads.items():
+        if payload.startswith("@<"):
+            with pytest.raises(GedcomSerializeError):
+                gedcom7.format_value("@I1@", type_id)
+
+
+def test_format_value_empty_payload_is_not_no_payload() -> None:
+    """An empty date period is a payload, and is not the same as None."""
+    empty = gedcom7.format_value(types.DatePeriod(), V7 + "NO-DATE")
+    assert empty == ""
+    assert empty is not None
+
+
 def test_format_value_wrong_type_for_the_structure() -> None:
     with pytest.raises(GedcomSerializeError):
         gedcom7.format_value("13:15", TIME)
@@ -456,7 +479,6 @@ def test_format_functions_mirror_cast_functions() -> None:
 # One structure type per data type, so that going through the public entry
 # points covers every payload the two tables know about. Kept honest by
 # test_round_trip_covers_every_data_type below.
-V7 = "https://gedcom.io/terms/v7/"
 ROUND_TRIP = [
     (V7 + "ADOP", "Y"),
     (V7 + "LANG", "en-US"),

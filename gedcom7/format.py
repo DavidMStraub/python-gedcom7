@@ -29,14 +29,20 @@ _T = TypeVar("_T")
 def format_value(value: types.DataType | None, type_id: str) -> str | None:
     """Format a value as the payload string for its structure type.
 
-    Returns ``None`` when the structure carries no payload, which for a boolean
-    also means the structure itself should be left out: a false ``Y|<NULL>`` is
-    written by omitting the structure, not by writing an empty payload.
+    ``None`` and the empty string mean different things, and a caller deciding
+    what to write has to tell them apart. ``None`` means there is no structure to
+    write: it comes back for a value of ``None``, and for a false ``Y|<NULL>``,
+    which the specification expresses by leaving the structure out rather than by
+    writing it empty. The empty string means the structure is written with no
+    payload, as for an empty :class:`~gedcom7.types.DatePeriod`, which is a legal
+    date period and not the absence of one.
 
     Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value cannot
-    be written as a payload conforming to its structure type. A structure with no
-    standard type has no data type to format, so its text is written as it
-    stands rather than passed here.
+    be written as a payload conforming to its structure type, including when the
+    structure type points at a record: a pointer belongs in the structure's
+    pointer, and writing it as text would escape its leading "@" and turn the
+    link into a line of text. A structure with no standard type has no data type
+    to format, so its text is written as it stands rather than passed here.
     """
     if value is None:
         return None
@@ -45,6 +51,11 @@ def format_value(value: types.DataType | None, type_id: str) -> str | None:
         raise GedcomSerializeError(f"Unknown structure type {type_id}")
     if not payload:
         raise GedcomSerializeError(f"{type_id} takes no payload")
+    if payload.startswith("@<") and payload.endswith(">@"):
+        raise GedcomSerializeError(
+            f"{type_id} points at a record rather than carrying a value; "
+            "set the structure's pointer instead of its text"
+        )
     format_function = FORMAT_FUNCTIONS.get(payload)
     if not format_function:
         return _format_string(value)
