@@ -7,12 +7,11 @@ from typing import TYPE_CHECKING
 
 from . import const, grammar
 from .exceptions import GedcomSerializeError
+from .types import GedcomStructure
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import BinaryIO
-
-    from .types import GedcomStructure
 
 _EOL = re.compile(r"\r\n|\r|\n")
 _TAG = re.compile(grammar.tag)
@@ -20,6 +19,7 @@ _XREF = re.compile(grammar.xref)
 _POINTER = re.compile(grammar.pointer)
 _BANNED = re.compile(grammar.banned)
 _TAGDEF = re.compile(grammar.tagdef)
+_EXTTAG = re.compile(grammar.exttag)
 
 _BOM = "\ufeff"
 
@@ -50,6 +50,94 @@ def _schema(records: Iterable[GedcomStructure]) -> dict[str, str]:
                 if match is not None:
                     uris.setdefault(match.group("uri"), match.group("exttag"))
     return uris
+
+
+def _extension_tag(uri: str, taken: set[str]) -> str:
+    """Invent an extension tag for a URI, avoiding every tag already spoken for.
+
+    The last path segment or fragment of the URI usually reads as a name, so it
+    is the basis for the tag; a URI that yields nothing usable falls back to a
+    plain counter. A tag already in use is stepped past rather than reused, since
+    a tag standing for two things resolves to neither on the way back in.
+    """
+    segment = re.split(r"[/#]", uri)[-1]
+    base = "_" + re.sub(r"[^A-Z0-9_]", "", segment.upper())
+    if _EXTTAG.fullmatch(base) is None:
+        base = "_EXT"
+    candidate, suffix = base, 1
+    while candidate in taken:
+        suffix += 1
+        candidate = f"{base}{suffix}"
+    return candidate
+
+
+def generate_schema(records: list[GedcomStructure]) -> None:
+    """Add to HEAD the schema declarations dumps needs to write extension tags.
+
+    Takes a whole dataset, HEAD included, and modifies it in place::
+
+        records = gedcom7.loads(text)
+        gedcom7.generate_schema(records)   # records[0] gains HEAD.SCHMA.TAG
+        gedcom7.dumps(records)
+
+    A tag held as a URI cannot be written until the header abbreviates it. Only
+    HEAD changes; the URIs stay on their own structures for :func:`dumps` to
+    substitute as it writes. Declarations already there are kept, so a second
+    call does nothing.
+
+    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if there is no HEAD,
+    or if a tag is neither writable nor a URI that can be abbreviated.
+    """
+    head = next((record for record in records if record.tag == const.HEAD), None)
+    if head is None:
+        raise GedcomSerializeError(
+            "a schema is declared in the HEAD pseudo-structure, and these "
+            "records do not have one"
+        )
+
+    declared = _schema(records)
+    # Every literal tag in the document is spoken for as well: were a generated
+    # tag to collide with one, that structure would resolve to the extension's
+    # URI when the stream was read back.
+    taken = set(declared.values())
+    undeclared: dict[str, None] = {}
+
+    def visit(structure: GedcomStructure) -> None:
+        if _TAG.fullmatch(structure.tag) is None:
+            if structure.tag not in declared:
+                undeclared.setdefault(structure.tag, None)
+        else:
+            taken.add(structure.tag)
+        for child in structure.children:
+            visit(child)
+
+    for record in records:
+        visit(record)
+
+    if not undeclared:
+        return
+
+    schema = next((c for c in head.children if c.tag == const.SCHMA), None)
+    if schema is None:
+        schema = GedcomStructure(tag=const.SCHMA)
+        schema.parent = head
+        gedc = next(
+            (i for i, c in enumerate(head.children) if c.tag == const.GEDC), None
+        )
+        head.children.insert(0 if gedc is None else gedc + 1, schema)
+
+    # One tag per URI and one URI per tag: dumps picks arbitrarily between two
+    # tags for a URI, and the parser refuses to resolve a tag that maps to two.
+    for uri in undeclared:
+        tag = _extension_tag(uri, taken)
+        taken.add(tag)
+        definition = f"{tag} {uri}"
+        if _TAGDEF.fullmatch(definition) is None:
+            raise GedcomSerializeError(
+                f"{uri!r} cannot be declared in a schema: it is neither a tag "
+                "this serializer can write nor a URI it can abbreviate"
+            )
+        schema.append_child(GedcomStructure(tag=const.TAG, text=definition))
 
 
 def _lines(
