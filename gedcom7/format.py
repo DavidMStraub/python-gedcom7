@@ -29,11 +29,13 @@ _T = TypeVar("_T")
 def format_value(value: types.DataType | None, type_id: str) -> str | None:
     """Format a value as the payload string for its structure type.
 
-    An empty payload and no structure at all are different answers::
+    A structure type is named by its URI, and an empty payload and no structure
+    at all are different answers::
 
-        format_value(Date(year=2000), DATE)   -> "2000"
-        format_value(DatePeriod(), NO_DATE)   -> ""     write an empty payload
-        format_value(False, ADOP)             -> None   write no structure
+        V7 = "https://gedcom.io/terms/v7/"
+        format_value(types.Date(year=2000), V7 + "DATE")   -> "2000"
+        format_value(types.DatePeriod(), V7 + "NO-DATE")   -> ""    empty payload
+        format_value(False, V7 + "ADOP")                   -> None  no structure
 
     ``None`` also comes back for a value of ``None``. A false ``Y|<NULL>`` gives
     it because the specification expresses that by omitting the structure.

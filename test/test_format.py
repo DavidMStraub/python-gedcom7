@@ -738,3 +738,10 @@ def test_set_value_round_trips_through_the_serializer() -> None:
         "1 BIRT\n2 DATE 1 JAN 2000\n0 TRLR\n"
     )
     assert gedcom7.loads(text) == [head, individual, trlr]
+
+
+def test_format_value_docstring_examples() -> None:
+    """The examples in format_value's docstring have to be true."""
+    assert gedcom7.format_value(types.Date(year=2000), V7 + "DATE") == "2000"
+    assert gedcom7.format_value(types.DatePeriod(), V7 + "NO-DATE") == ""
+    assert gedcom7.format_value(False, V7 + "ADOP") is None
