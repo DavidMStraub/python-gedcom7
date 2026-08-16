@@ -272,3 +272,244 @@ def test_banned_character_in_payload_rejected() -> None:
     records[1].children[0].text = "bad\x7fchar"
     with pytest.raises(GedcomSerializeError, match="banned character"):
         gedcom7.dumps(records)
+
+
+# --------------------------------------------------------------------------
+# Schema generation
+# --------------------------------------------------------------------------
+
+FOAF = "http://xmlns.com/foaf/0.1/skypeID"
+
+
+def extension_record(*uris: str) -> types.GedcomStructure:
+    """An individual carrying one substructure per extension URI."""
+    individual = types.GedcomStructure(tag="INDI", xref="@I1@")
+    for uri in uris:
+        individual.append_child(types.GedcomStructure(tag=uri, text="payload"))
+    return individual
+
+
+def header(*children: types.GedcomStructure) -> types.GedcomStructure:
+    head = types.GedcomStructure(tag="HEAD")
+    gedc = types.GedcomStructure(tag="GEDC")
+    gedc.append_child(types.GedcomStructure(tag="VERS", text="7.0"))
+    head.append_child(gedc)
+    for child in children:
+        head.append_child(child)
+    return head
+
+
+def test_generate_schema_declares_an_undeclared_uri() -> None:
+    """dumps refuses a URI tag it has no abbreviation for; this supplies one."""
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    with pytest.raises(GedcomSerializeError, match="not a valid tag"):
+        gedcom7.dumps(records)
+
+    gedcom7.generate_schema(records)
+    assert gedcom7.dumps(records, byte_order_mark=False) == (
+        "0 HEAD\n1 GEDC\n2 VERS 7.0\n1 SCHMA\n2 TAG _SKYPEID " + FOAF + "\n"
+        "0 @I1@ INDI\n1 _SKYPEID payload\n0 TRLR\n"
+    )
+
+
+def test_generate_schema_round_trips_the_uri() -> None:
+    """The abbreviation has to resolve back to the URI it stood for."""
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(records)
+    reparsed = gedcom7.loads(gedcom7.dumps(records))
+    assert reparsed[1].children[0].tag == FOAF
+
+
+def test_generate_schema_keeps_declarations_already_made() -> None:
+    """A tag chosen by hand is reused, not replaced."""
+    schema = types.GedcomStructure(tag="SCHMA")
+    schema.append_child(types.GedcomStructure(tag="TAG", text=f"_MINE {FOAF}"))
+    records = [
+        header(schema),
+        extension_record(FOAF),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    gedcom7.generate_schema(records)
+    definitions = [c.text for c in records[0].children[1].children]
+    assert definitions == [f"_MINE {FOAF}"]
+    assert "1 _MINE payload" in gedcom7.dumps(records)
+
+
+def test_generate_schema_is_idempotent() -> None:
+    """Running it twice must not declare the same URI a second time."""
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(records)
+    first = gedcom7.dumps(records)
+    gedcom7.generate_schema(records)
+    assert gedcom7.dumps(records) == first
+
+
+def test_generate_schema_gives_each_uri_one_tag() -> None:
+    """One URI on many structures is declared once."""
+    records = [
+        header(),
+        extension_record(FOAF, FOAF, FOAF),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    gedcom7.generate_schema(records)
+    assert len(records[0].children[1].children) == 1
+
+
+def test_generate_schema_avoids_colliding_with_another_uris_tag() -> None:
+    """Two URIs whose last segments match must not be given the same tag."""
+    other = "http://example.com/other/skypeID"
+    records = [
+        header(),
+        extension_record(FOAF, other),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    gedcom7.generate_schema(records)
+    tags = [c.text.split()[0] for c in records[0].children[1].children]
+    assert tags == ["_SKYPEID", "_SKYPEID2"]
+    reparsed = gedcom7.loads(gedcom7.dumps(records))
+    assert [c.tag for c in reparsed[1].children] == [FOAF, other]
+
+
+def test_generate_schema_avoids_colliding_with_a_literal_tag() -> None:
+    """A tag used literally must not be made to stand for a URI as well.
+
+    Were _SKYPEID already in the document as an undocumented extension tag,
+    declaring it here would make that structure resolve to the URI on the way
+    back in, silently changing what it means.
+    """
+    individual = extension_record(FOAF)
+    individual.append_child(types.GedcomStructure(tag="_SKYPEID", text="unrelated"))
+    records = [header(), individual, types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(records)
+
+    assert records[0].children[1].children[0].text == f"_SKYPEID2 {FOAF}"
+    reparsed = gedcom7.loads(gedcom7.dumps(records))
+    assert [c.tag for c in reparsed[1].children] == [FOAF, "_SKYPEID"]
+
+
+def test_generate_schema_without_anything_to_declare() -> None:
+    """A document using no extensions gets no empty schema."""
+    records = [
+        header(),
+        types.GedcomStructure(tag="INDI", xref="@I1@"),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    gedcom7.generate_schema(records)
+    assert [c.tag for c in records[0].children] == ["GEDC"]
+
+
+def test_generate_schema_falls_back_when_the_uri_yields_no_name() -> None:
+    """A URI whose last segment gives nothing usable still gets a tag."""
+    records = [
+        header(),
+        extension_record("http://example.com/"),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    gedcom7.generate_schema(records)
+    assert records[0].children[1].children[0].text == "_EXT http://example.com/"
+
+
+def test_generate_schema_needs_a_header() -> None:
+    records = [types.GedcomStructure(tag="TRLR")]
+    with pytest.raises(GedcomSerializeError, match="HEAD"):
+        gedcom7.generate_schema(records)
+
+
+def test_generate_schema_rejects_a_tag_that_is_no_uri_either() -> None:
+    """A tag that is neither writable nor abbreviatable cannot be rescued."""
+    records = [
+        header(),
+        extension_record("not a tag and not a uri"),
+        types.GedcomStructure(tag="TRLR"),
+    ]
+    with pytest.raises(GedcomSerializeError, match="neither a tag"):
+        gedcom7.generate_schema(records)
+
+
+def test_generate_schema_places_the_schema_after_gedc() -> None:
+    """The slot is deterministic, so regenerating a file does not reshuffle it."""
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(records)
+    assert [c.tag for c in records[0].children] == ["GEDC", "SCHMA"]
+
+
+def test_generate_schema_reproduces_the_corpus_declarations() -> None:
+    """Stripping maximal70.ged's schema and regenerating it declares the same tags.
+
+    The hand-written declarations in the official file are the check on the tag
+    naming: a generated tag has to be the one a person would have picked.
+    """
+    filename = pathlib.Path(__file__).parent / "data" / "maximal70.ged"
+    original = gedcom7.loads(filename.read_text(encoding="utf-8"))
+    declarations = [
+        definition.text
+        for schema in original[0].children
+        if schema.tag == "SCHMA"
+        for definition in schema.children
+    ]
+
+    stripped = gedcom7.loads(filename.read_text(encoding="utf-8"))
+    stripped[0].children = [c for c in stripped[0].children if c.tag != "SCHMA"]
+    gedcom7.generate_schema(stripped)
+
+    regenerated = [
+        definition.text
+        for schema in stripped[0].children
+        if schema.tag == "SCHMA"
+        for definition in schema.children
+    ]
+    assert regenerated == declarations
+    # the schema moves to its deterministic slot, so the bytes differ, but every
+    # extension tag has to resolve to the URI it stood for before
+    assert gedcom7.loads(gedcom7.dumps(stripped)) == stripped
+
+
+def test_generate_schema_touches_only_the_header() -> None:
+    """The one structure that changes is HEAD, which gains the declarations.
+
+    The structures carrying the URIs keep them as their tags; dumps does the
+    abbreviating as it writes. Nothing else in the tree is rewritten, and the
+    records list is not itself changed.
+    """
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+
+    def snapshot() -> dict[int, tuple[object, ...]]:
+        seen: dict[int, tuple[object, ...]] = {}
+
+        def visit(s: types.GedcomStructure) -> None:
+            seen[id(s)] = (
+                s.tag,
+                s.pointer,
+                s.text,
+                s.xref,
+                tuple(id(c) for c in s.children),
+            )
+            for child in s.children:
+                visit(child)
+
+        for record in records:
+            visit(record)
+        return seen
+
+    before = snapshot()
+    contents = [id(r) for r in records]
+    gedcom7.generate_schema(records)
+    after = snapshot()
+
+    changed = [before[k][0] for k in before if after[k] != before[k]]
+    assert changed == ["HEAD"]
+    assert [id(r) for r in records] == contents
+    # the extension structure still holds its URI, unabbreviated
+    assert records[1].children[0].tag == FOAF
+
+
+def test_generate_schema_accepts_any_iterable() -> None:
+    """The records are walked several times, so a one-shot iterator must survive.
+
+    Passing an iterator used to consume it during the search for HEAD, leaving
+    the traversal nothing to find and making the call a silent no-op.
+    """
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(iter(records))
+    assert [c.tag for c in records[0].children] == ["GEDC", "SCHMA"]
+    assert records[0].children[1].children[0].text == f"_SKYPEID {FOAF}"

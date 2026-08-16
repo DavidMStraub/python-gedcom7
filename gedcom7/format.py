@@ -29,20 +29,20 @@ _T = TypeVar("_T")
 def format_value(value: types.DataType | None, type_id: str) -> str | None:
     """Format a value as the payload string for its structure type.
 
-    ``None`` and the empty string mean different things, and a caller deciding
-    what to write has to tell them apart. ``None`` means there is no structure to
-    write: it comes back for a value of ``None``, and for a false ``Y|<NULL>``,
-    which the specification expresses by leaving the structure out rather than by
-    writing it empty. The empty string means the structure is written with no
-    payload, as for an empty :class:`~gedcom7.types.DatePeriod`, which is a legal
-    date period and not the absence of one.
+    A structure type is named by its URI, and an empty payload and no structure
+    at all are different answers::
 
-    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value cannot
-    be written as a payload conforming to its structure type, including when the
-    structure type points at a record: a pointer belongs in the structure's
-    pointer, and writing it as text would escape its leading "@" and turn the
-    link into a line of text. A structure with no standard type has no data type
-    to format, so its text is written as it stands rather than passed here.
+        V7 = "https://gedcom.io/terms/v7/"
+        format_value(types.Date(year=2000), V7 + "DATE")   -> "2000"
+        format_value(types.DatePeriod(), V7 + "NO-DATE")   -> ""    empty payload
+        format_value(False, V7 + "ADOP")                   -> None  no structure
+
+    ``None`` also comes back for a value of ``None``. A false ``Y|<NULL>`` gives
+    it because the specification expresses that by omitting the structure.
+
+    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value has no
+    conforming payload, or if the structure type points at a record, whose
+    pointer belongs in the structure's ``pointer`` rather than its ``text``.
     """
     if value is None:
         return None
@@ -62,30 +62,29 @@ def format_value(value: types.DataType | None, type_id: str) -> str | None:
     return format_function(value)
 
 
+# The counterpart of GedcomStructure.value, but a function rather than a method:
+# it formats, and a method would put an import of this module back into types.
 def set_value(
     structure: types.GedcomStructure,
     value: types.DataType,
     type_id: str | None = None,
 ) -> None:
-    """Set a structure's payload from a value of its structure type's data type.
+    """Set a structure's payload from a typed value, in place.
 
-    The counterpart of :attr:`~gedcom7.types.GedcomStructure.value`, which reads
-    a payload back. Reading is a property of a structure the parser has already
-    built; writing is something a writer does to one, which is why this is a
-    function here rather than a method there.
+    Which data type applies comes from the structure type, which a structure only
+    has once it sits under its superstructure, so attach it first::
 
-    Which data type applies follows from the structure type, and a structure only
-    has one once it sits under its superstructure, since that is what gives its
-    tag a meaning. Building a tree from the leaves up therefore means attaching a
-    structure before setting its value, or naming the structure type here. Where
-    no standard type applies the payload is carried uninterpreted, exactly as the
-    reader returns it, so a string is set as it stands and anything else is
-    refused.
+        birth.append_child(date)
+        set_value(date, types.Date(day=1, month="JAN", year=2000))
+        date.text   # "1 JAN 2000"
 
-    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value cannot
-    be written as a payload, which includes a false ``Y|<NULL>``: the
-    specification expresses that by leaving the structure out, and removing a
-    structure from its superstructure is the caller's to do.
+    Pass ``type_id`` to name the structure type instead, for one not yet
+    attached. Where no standard type applies the payload is uninterpreted, so a
+    string is set as it stands and anything else is refused.
+
+    Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the value has no
+    payload, including a false ``Y|<NULL>``: the specification expresses that by
+    omitting the structure, and removing it is the caller's to do.
     """
     resolved = type_id if type_id is not None else structure.type_id
     if resolved is None:
