@@ -71,10 +71,10 @@ def _extension_tag(uri: str, taken: set[str]) -> str:
     return candidate
 
 
-def generate_schema(records: list[GedcomStructure]) -> None:
+def generate_schema(records: Iterable[GedcomStructure]) -> None:
     """Add to HEAD the schema declarations dumps needs to write extension tags.
 
-    Takes a whole dataset, HEAD included, and modifies it in place::
+    Takes a whole dataset, HEAD included, and modifies its structures in place::
 
         records = gedcom7.loads(text)
         gedcom7.generate_schema(records)   # records[0] gains HEAD.SCHMA.TAG
@@ -88,6 +88,9 @@ def generate_schema(records: list[GedcomStructure]) -> None:
     Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if there is no HEAD,
     or if a tag is neither writable nor a URI that can be abbreviated.
     """
+    # Read once: the records are walked several times below, and a caller passing
+    # a one-shot iterator would otherwise have them silently disappear part way.
+    records = list(records)
     head = next((record for record in records if record.tag == const.HEAD), None)
     if head is None:
         raise GedcomSerializeError(

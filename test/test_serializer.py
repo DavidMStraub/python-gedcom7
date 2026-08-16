@@ -501,3 +501,15 @@ def test_generate_schema_touches_only_the_header() -> None:
     assert [id(r) for r in records] == contents
     # the extension structure still holds its URI, unabbreviated
     assert records[1].children[0].tag == FOAF
+
+
+def test_generate_schema_accepts_any_iterable() -> None:
+    """The records are walked several times, so a one-shot iterator must survive.
+
+    Passing an iterator used to consume it during the search for HEAD, leaving
+    the traversal nothing to find and making the call a silent no-op.
+    """
+    records = [header(), extension_record(FOAF), types.GedcomStructure(tag="TRLR")]
+    gedcom7.generate_schema(iter(records))
+    assert [c.tag for c in records[0].children] == ["GEDC", "SCHMA"]
+    assert records[0].children[1].children[0].text == f"_SKYPEID {FOAF}"
