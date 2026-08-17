@@ -5,7 +5,7 @@ import pathlib
 import pytest
 
 import gedcom7
-from gedcom7 import GedcomSerializeError, const, format, types
+from gedcom7 import GedcomSerializeError, const, formatter, types
 
 V7 = "https://gedcom.io/terms/v7/"
 LATI = "https://gedcom.io/terms/v7/LATI"
@@ -44,7 +44,7 @@ BAPL = "https://gedcom.io/terms/v7/BAPL"
     ],
 )
 def test_format_latitude(degrees: float, expected: str) -> None:
-    assert format._format_latitude(degrees) == expected
+    assert formatter._format_latitude(degrees) == expected
 
 
 @pytest.mark.parametrize(
@@ -62,26 +62,26 @@ def test_format_latitude(degrees: float, expected: str) -> None:
     ],
 )
 def test_format_longitude(degrees: float, expected: str) -> None:
-    assert format._format_longitude(degrees) == expected
+    assert formatter._format_longitude(degrees) == expected
 
 
 @pytest.mark.parametrize("degrees", [90.5, -90.5, 91, 1000, float("inf")])
 def test_format_latitude_out_of_range(degrees: float) -> None:
     """The grammar admits "N90.5", so the range is enforced here instead."""
     with pytest.raises(GedcomSerializeError):
-        format._format_latitude(degrees)
+        formatter._format_latitude(degrees)
 
 
 @pytest.mark.parametrize("degrees", [180.5, -180.5, 181])
 def test_format_longitude_out_of_range(degrees: float) -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_longitude(degrees)
+        formatter._format_longitude(degrees)
 
 
 @pytest.mark.parametrize("value", ["18.15", True, None])
 def test_format_latitude_rejects_non_numbers(value: object) -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_latitude(value)
+        formatter._format_latitude(value)
 
 
 # --------------------------------------------------------------------------
@@ -110,13 +110,13 @@ def test_format_latitude_rejects_non_numbers(value: object) -> None:
     ],
 )
 def test_format_time(time: types.Time, expected: str) -> None:
-    assert format._format_time(time) == expected
+    assert formatter._format_time(time) == expected
 
 
 def test_format_time_fraction_without_seconds() -> None:
     """The grammar hangs the fraction off the seconds, so it cannot stand alone."""
     with pytest.raises(GedcomSerializeError):
-        format._format_time(types.Time(hour=13, minute=15, fraction="5"))
+        formatter._format_time(types.Time(hour=13, minute=15, fraction="5"))
 
 
 @pytest.mark.parametrize(
@@ -124,7 +124,7 @@ def test_format_time_fraction_without_seconds() -> None:
 )
 def test_format_time_out_of_range(time: types.Time) -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_time(time)
+        formatter._format_time(time)
 
 
 # --------------------------------------------------------------------------
@@ -155,13 +155,13 @@ def test_format_time_out_of_range(time: types.Time) -> None:
     ],
 )
 def test_format_personal_name(name: types.PersonalName, expected: str) -> None:
-    assert format._format_personal_name(name) == expected
+    assert formatter._format_personal_name(name) == expected
 
 
 def test_format_personal_name_prefers_parts_over_fullname() -> None:
     """fullname is the payload with its slashes removed, so it cannot place them."""
     name = types.PersonalName(fullname="ignored entirely", given="John", surname="Doe")
-    assert format._format_personal_name(name) == "John /Doe/"
+    assert formatter._format_personal_name(name) == "John /Doe/"
 
 
 # --------------------------------------------------------------------------
@@ -181,13 +181,13 @@ def test_format_personal_name_prefers_parts_over_fullname() -> None:
     ],
 )
 def test_format_age(age: types.Age, expected: str) -> None:
-    assert format._format_age(age) == expected
+    assert formatter._format_age(age) == expected
 
 
 @pytest.mark.parametrize("age", [types.Age(), types.Age(agebound=">")])
 def test_format_age_without_duration(age: types.Age) -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_age(age)
+        formatter._format_age(age)
 
 
 # --------------------------------------------------------------------------
@@ -210,7 +210,7 @@ def test_format_age_without_duration(age: types.Age) -> None:
     ],
 )
 def test_format_date(date: types.Date, expected: str) -> None:
-    assert format._format_date(date) == expected
+    assert formatter._format_date(date) == expected
 
 
 @pytest.mark.parametrize(
@@ -219,12 +219,12 @@ def test_format_date(date: types.Date, expected: str) -> None:
 def test_format_date_incomplete(date: types.Date) -> None:
     """A date needs a year, and a day is meaningless without a month."""
     with pytest.raises(GedcomSerializeError):
-        format._format_date(date)
+        formatter._format_date(date)
 
 
 def test_format_date_period_empty_is_a_legal_payload() -> None:
     """The grammar makes every part of a date period optional."""
-    assert format._format_date_period(types.DatePeriod()) == ""
+    assert formatter._format_date_period(types.DatePeriod()) == ""
 
 
 @pytest.mark.parametrize(
@@ -239,7 +239,7 @@ def test_format_date_period_empty_is_a_legal_payload() -> None:
     ],
 )
 def test_format_date_period(period: types.DatePeriod, expected: str) -> None:
-    assert format._format_date_period(period) == expected
+    assert formatter._format_date_period(period) == expected
 
 
 @pytest.mark.parametrize(
@@ -254,12 +254,12 @@ def test_format_date_period(period: types.DatePeriod, expected: str) -> None:
     ],
 )
 def test_format_date_range(date_range: types.DateRange, expected: str) -> None:
-    assert format._format_date_range(date_range) == expected
+    assert formatter._format_date_range(date_range) == expected
 
 
 def test_format_date_range_empty() -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_date_range(types.DateRange())
+        formatter._format_date_range(types.DateRange())
 
 
 @pytest.mark.parametrize("qualifier", ["ABT", "CAL", "EST"])
@@ -267,33 +267,33 @@ def test_format_date_approx(qualifier: str) -> None:
     approx = types.DateApprox(
         date=types.Date(day=1, month="OCT", year=2023), approx=qualifier
     )
-    assert format._format_date_approx(approx) == f"{qualifier} 1 OCT 2023"
+    assert formatter._format_date_approx(approx) == f"{qualifier} 1 OCT 2023"
 
 
 def test_format_date_approx_without_qualifier() -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_date_approx(types.DateApprox(date=types.Date(year=2023)))
+        formatter._format_date_approx(types.DateApprox(date=types.Date(year=2023)))
 
 
 def test_format_date_exact() -> None:
-    assert format._format_date_exact(
+    assert formatter._format_date_exact(
         types.DateExact(day=1, month="NOV", year=2022)
     ) == ("1 NOV 2022")
 
 
 def test_format_date_value_dispatches_on_the_form() -> None:
     """A date value is whichever of the four forms the value carries."""
-    assert format._format_date_value(types.Date(year=1998)) == "1998"
+    assert formatter._format_date_value(types.Date(year=1998)) == "1998"
     assert (
-        format._format_date_value(types.DatePeriod(to=types.Date(year=1800)))
+        formatter._format_date_value(types.DatePeriod(to=types.Date(year=1800)))
         == "TO 1800"
     )
     assert (
-        format._format_date_value(types.DateRange(end=types.Date(year=1800)))
+        formatter._format_date_value(types.DateRange(end=types.Date(year=1800)))
         == "BEF 1800"
     )
     assert (
-        format._format_date_value(
+        formatter._format_date_value(
             types.DateApprox(date=types.Date(year=1800), approx="ABT")
         )
         == "ABT 1800"
@@ -307,49 +307,50 @@ def test_format_date_value_dispatches_on_the_form() -> None:
 
 def test_format_bool() -> None:
     """A false boolean is written by leaving the structure out altogether."""
-    assert format._format_bool(True) == "Y"
-    assert format._format_bool(False) is None
+    assert formatter._format_bool(True) == "Y"
+    assert formatter._format_bool(False) is None
 
 
 @pytest.mark.parametrize("value", [0, 1, "Y", None])
 def test_format_bool_rejects_non_bools(value: object) -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_bool(value)
+        formatter._format_bool(value)
 
 
 def test_format_integer() -> None:
-    assert format._format_integer(0) == "0"
-    assert format._format_integer(100) == "100"
+    assert formatter._format_integer(0) == "0"
+    assert formatter._format_integer(100) == "100"
 
 
 @pytest.mark.parametrize("value", [-1, True, 1.5, "1"])
 def test_format_integer_rejects(value: object) -> None:
     """The payload is a non-negative integer, and a bool is not an integer here."""
     with pytest.raises(GedcomSerializeError):
-        format._format_integer(value)
+        formatter._format_integer(value)
 
 
 def test_format_list_text() -> None:
     assert (
-        format._format_list_text(["City", "County", "State"]) == "City, County, State"
+        formatter._format_list_text(["City", "County", "State"])
+        == "City, County, State"
     )
-    assert format._format_list_text(["Somewhere"]) == "Somewhere"
+    assert formatter._format_list_text(["Somewhere"]) == "Somewhere"
 
 
 def test_format_list_text_item_containing_a_comma() -> None:
     """A list has no escaping, so a comma in an item would split it in two."""
     with pytest.raises(GedcomSerializeError):
-        format._format_list_text(["Paris, France", "Europe"])
+        formatter._format_list_text(["Paris, France", "Europe"])
 
 
 def test_format_list_text_strips_space_around_items() -> None:
     """The grammar allows space either side of the separator, so it means nothing."""
-    assert format._format_list_text(["City ", " County"]) == "City, County"
-    assert format._format_list_text([" Somewhere "]) == "Somewhere"
+    assert formatter._format_list_text(["City ", " County"]) == "City, County"
+    assert formatter._format_list_text([" Somewhere "]) == "Somewhere"
 
 
 def test_format_list_enum() -> None:
-    assert format._format_list_enum(["BIRT", "DEAT"]) == "BIRT, DEAT"
+    assert formatter._format_list_enum(["BIRT", "DEAT"]) == "BIRT, DEAT"
 
 
 def test_format_list_enum_does_not_strip_items() -> None:
@@ -359,39 +360,39 @@ def test_format_list_enum_does_not_strip_items() -> None:
     padding around a delimiter.
     """
     with pytest.raises(GedcomSerializeError):
-        format._format_list_enum([" BIRT", "DEAT"])
+        formatter._format_list_enum([" BIRT", "DEAT"])
     with pytest.raises(GedcomSerializeError):
-        format._format_enum(" BIRT")
+        formatter._format_enum(" BIRT")
 
 
 def test_format_enum() -> None:
-    assert format._format_enum("ADOPTED") == "ADOPTED"
-    assert format._format_enum("0") == "0"
-    assert format._format_enum("_CUSTOM") == "_CUSTOM"
+    assert formatter._format_enum("ADOPTED") == "ADOPTED"
+    assert formatter._format_enum("0") == "0"
+    assert formatter._format_enum("_CUSTOM") == "_CUSTOM"
 
 
 def test_format_enum_invalid() -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_enum("not an enum")
+        formatter._format_enum("not an enum")
 
 
 def test_format_mediatype() -> None:
     assert (
-        format._format_mediatype(types.MediaType(media_type="text/plain"))
+        formatter._format_mediatype(types.MediaType(media_type="text/plain"))
         == "text/plain"
     )
 
 
 def test_format_mediatype_invalid() -> None:
     with pytest.raises(GedcomSerializeError):
-        format._format_mediatype(types.MediaType(media_type="nonsense"))
+        formatter._format_mediatype(types.MediaType(media_type="nonsense"))
 
 
 def test_format_tag_definition() -> None:
     definition = types.TagDefinition(
         tag="_SKYPEID", uri="http://xmlns.com/foaf/0.1/skypeID"
     )
-    assert format._format_tag_definition(definition) == (
+    assert formatter._format_tag_definition(definition) == (
         "_SKYPEID http://xmlns.com/foaf/0.1/skypeID"
     )
 
@@ -399,7 +400,7 @@ def test_format_tag_definition() -> None:
 def test_format_tag_definition_invalid_tag() -> None:
     """An extension tag begins with an underscore."""
     with pytest.raises(GedcomSerializeError):
-        format._format_tag_definition(
+        formatter._format_tag_definition(
             types.TagDefinition(tag="SKYPEID", uri="http://x/")
         )
 
@@ -462,7 +463,7 @@ def test_every_payload_in_the_specification_is_accounted_for() -> None:
     for payload in set(const.payloads.values()):
         accounted_for = (
             payload == ""
-            or payload in format.FORMAT_FUNCTIONS
+            or payload in formatter.FORMAT_FUNCTIONS
             or (payload.startswith("@<") and payload.endswith(">@"))
         )
         assert accounted_for, f"{payload} would fall through to plain text"
@@ -484,9 +485,9 @@ def test_format_functions_mirror_cast_functions() -> None:
     """Both tables key off the payload type, so they must cover the same set."""
     from gedcom7 import cast
 
-    assert format.FORMAT_FUNCTIONS.keys() == cast.CAST_FUNCTIONS.keys()
+    assert formatter.FORMAT_FUNCTIONS.keys() == cast.CAST_FUNCTIONS.keys()
     for payload, cast_function in cast.CAST_FUNCTIONS.items():
-        assert (cast_function is None) == (format.FORMAT_FUNCTIONS[payload] is None)
+        assert (cast_function is None) == (formatter.FORMAT_FUNCTIONS[payload] is None)
 
 
 # --------------------------------------------------------------------------
@@ -578,7 +579,7 @@ def test_round_trip_covers_every_data_type() -> None:
     """Every payload either table knows about must appear in the round trip."""
     covered = {const.payloads[type_id] for type_id, _ in ROUND_TRIP}
     assert covered == set(gedcom7.cast.CAST_FUNCTIONS)
-    assert covered == set(format.FORMAT_FUNCTIONS)
+    assert covered == set(formatter.FORMAT_FUNCTIONS)
 
 
 # --------------------------------------------------------------------------

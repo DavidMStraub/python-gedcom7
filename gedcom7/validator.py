@@ -54,7 +54,7 @@ def validate(records: Iterable[types.GedcomStructure]) -> list[Error]:
 
     An empty list means the dataset passes the checks this can make; it does not
     mean the dataset conforms, since cardinality and enumeration values are not
-    checked. See :mod:`gedcom7.validate` for what that leaves out.
+    checked. See :mod:`gedcom7.validator` for what that leaves out.
     """
     records = list(records)
     errors: list[Error] = []

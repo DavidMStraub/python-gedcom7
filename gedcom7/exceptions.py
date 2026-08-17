@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .validate import Error
+    from .validator import Error
 
 
 class GedcomError(Exception):

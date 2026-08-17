@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from . import const, grammar
 from .exceptions import GedcomSerializeError, GedcomValidationError
 from .types import GedcomStructure
-from .validate import validate as _validate
+from .validator import validate as _validate
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -222,7 +222,7 @@ def dumps(
     cannot be encoded as conforming lines. Pass ``validate=True`` to check the
     dataset first and raise
     :class:`~gedcom7.exceptions.GedcomValidationError`, whose ``errors`` holds
-    every problem :func:`~gedcom7.validate.validate` found, rather than only the
+    every problem :func:`~gedcom7.validator.validate` found, rather than only the
     first one that stops a line being written.
     """
     if line_terminator not in ("\n", "\r\n", "\r"):
