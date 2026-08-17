@@ -2,15 +2,23 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from .exceptions import GedcomError, GedcomParseError, GedcomSerializeError
-from .format import format_value, set_value
+from .exceptions import (
+    GedcomError,
+    GedcomParseError,
+    GedcomSerializeError,
+    GedcomValidationError,
+)
+from .formatter import format_value, set_value
 from .parser import load, loads
 from .serializer import dump, dumps, generate_schema
+from .validator import Error, validate
 
 __all__ = [
     "GedcomError",
     "GedcomParseError",
     "GedcomSerializeError",
+    "GedcomValidationError",
+    "Error",
     "dump",
     "dumps",
     "format_value",
@@ -18,6 +26,7 @@ __all__ = [
     "load",
     "loads",
     "set_value",
+    "validate",
 ]
 
 try:
