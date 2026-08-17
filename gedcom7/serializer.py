@@ -6,8 +6,9 @@ import re
 from typing import TYPE_CHECKING
 
 from . import const, grammar
-from .exceptions import GedcomSerializeError
+from .exceptions import GedcomSerializeError, GedcomValidationError
 from .types import GedcomStructure
+from .validate import validate as _validate
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -203,6 +204,7 @@ def dumps(
     *,
     line_terminator: str = "\n",
     byte_order_mark: bool = True,
+    validate: bool = False,
 ) -> str:
     """Serialize structures to a GEDCOM 7 data stream.
 
@@ -217,7 +219,11 @@ def dumps(
     terminators are not altered on the way out.
 
     Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if the structures
-    cannot be encoded as conforming lines.
+    cannot be encoded as conforming lines. Pass ``validate=True`` to check the
+    dataset first and raise
+    :class:`~gedcom7.exceptions.GedcomValidationError`, whose ``errors`` holds
+    every problem :func:`~gedcom7.validate.validate` found, rather than only the
+    first one that stops a line being written.
     """
     if line_terminator not in ("\n", "\r\n", "\r"):
         raise GedcomSerializeError(
@@ -226,6 +232,10 @@ def dumps(
         )
 
     records = list(records)
+    if validate:
+        errors = _validate(records)
+        if errors:
+            raise GedcomValidationError(errors)
     uris = _schema(records)
     lines = [line for record in records for line in _lines(record, 0, uris)]
 
