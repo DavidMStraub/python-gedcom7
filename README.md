@@ -31,7 +31,7 @@ with open("out.ged", "wb") as f:
 
 Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer`, the raw `text` payload, and `children`. Its `value` property casts the payload to the data type the specification gives that structure type.
 
-`loads` and `dumps` are the string equivalents. Non-conforming input raises `GedcomParseError`, a `ValueError` carrying `line_number`.
+`loads` and `dumps` are the string equivalents. Non-conforming input raises `GedcomParseError`, a `ValueError` carrying `line_number`. A pointer to a record that does not exist is kept rather than rejected; `gedcom7.validate(records)` lists each one as a `dangling-pointer` error.
 
 ## Development
 
