@@ -201,17 +201,18 @@ def _check_structure(
             structure,
         )
     _check_substructure(structure, errors)
-    if type_id is not None:
-        payload = const.payloads.get(type_id)
-        if payload is not None:
-            _check_payload_kind(structure, payload, errors)
-            # Only one of these can say anything useful. Where the payload is of
-            # the wrong kind entirely, chasing its pointer or casting its text
-            # would report the same mistake a second time.
-            if payload.startswith("@<"):
-                _check_pointer(structure, payload, xrefs, errors)
-            else:
-                _check_payload_value(structure, type_id, errors)
+    payload = const.payloads.get(type_id) if type_id is not None else None
+    points = payload is not None and payload.startswith("@<")
+    if type_id is not None and payload is not None:
+        _check_payload_kind(structure, payload, errors)
+        # A pointer payload's text is not cast: where it holds the pointer by
+        # mistake, the kind check above has already said so.
+        if not points:
+            _check_payload_value(structure, type_id, errors)
+    # Any structure may carry a pointer, whether the specification gives it a
+    # pointer payload, a value, or nothing it knows of, as for an extension. A
+    # pointer to a missing record is reported wherever it is found.
+    _check_pointer(structure, payload if points else None, xrefs, errors)
     for child in structure.children:
         _check_structure(child, xrefs, declared, errors)
 
@@ -267,11 +268,14 @@ def _check_payload_kind(
 
 def _check_pointer(
     structure: types.GedcomStructure,
-    payload: str,
+    payload: str | None,
     xrefs: dict[str, types.GedcomStructure],
     errors: list[Error],
 ) -> None:
-    """Check that a pointer reaches a record, and one of the right type."""
+    """Check that a pointer reaches a record, and one of the type ``payload`` names.
+
+    With no ``payload``, as for an extension, any record will do.
+    """
     if not structure.pointer or structure.pointer == const.VOIDPTR:
         return
     target = xrefs.get(structure.pointer)
@@ -282,7 +286,7 @@ def _check_pointer(
             f"{structure.pointer} is not a record in this dataset",
             structure,
         )
-    else:
+    elif payload is not None:
         wanted = payload[2:-2]
         if target.type_id != wanted:
             _report(
