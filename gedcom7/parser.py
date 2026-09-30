@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from typing import TYPE_CHECKING
 
 from . import const, grammar
@@ -10,6 +11,7 @@ from .exceptions import GedcomParseError
 from .types import GedcomStructure
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import BinaryIO
 
 # EOL = %x0D [%x0A] / %x0A -- CR-LF, CR, or LF
@@ -30,6 +32,21 @@ def _unescape(linestr: str) -> str:
     ``@@@@``, not to ``@@``.
     """
     return linestr[1:] if linestr.startswith("@@") else linestr
+
+
+def _lines(string: str) -> Iterator[str]:
+    """Yield the lines of a data stream, without their EOLs, one at a time.
+
+    A terminating EOL does not start a further, empty line. A data stream whose
+    last line lacks its EOL is tolerated: the line is complete and unambiguous,
+    and dropping it would silently lose data.
+    """
+    start = 0
+    for eol in _EOL.finditer(string):
+        yield string[start : eol.start()]
+        start = eol.end()
+    if start < len(string):
+        yield string[start:]
 
 
 def load(fp: BinaryIO) -> list[GedcomStructure]:
@@ -56,6 +73,10 @@ def loads(string: str) -> list[GedcomStructure]:
 
     Raises :class:`~gedcom7.exceptions.GedcomParseError` if the data stream does
     not conform to the specification. Non-conforming lines are never skipped.
+
+    A pointer that matches no cross-reference identifier is kept as written, so
+    one broken pointer does not cost the rest of the dataset;
+    :func:`~gedcom7.validate` reports each one as a ``dangling-pointer`` error.
     """
     string = string.removeprefix(_BOM)
 
@@ -66,24 +87,16 @@ def loads(string: str) -> list[GedcomStructure]:
             line_number=string.count("\n", 0, banned.start()) + 1,
         )
 
-    lines = _EOL.split(string)
-    # A terminating EOL leaves a final empty element that is not itself a line.
-    # A data stream whose last line lacks its EOL is tolerated: the line is
-    # complete and unambiguous, and dropping it would silently lose data.
-    if lines and lines[-1] == "":
-        lines.pop()
-
     records: list[GedcomStructure] = []
     # stack[i] is the structure encoded by the nearest preceding line of level i
     stack: list[GedcomStructure] = []
     # extension tag -> URIs declared for it by the header schema
     schema: dict[str, list[str]] = {}
     xrefs: set[str] = set()
-    pointers: list[tuple[str, int]] = []
     # the structure a CONT on the very next line would continue
     continuable: GedcomStructure | None = None
 
-    for number, text in enumerate(lines, start=1):
+    for number, text in enumerate(_lines(string), start=1):
         match = _LINE.fullmatch(text + "\n")
         if match is None:
             raise GedcomParseError(
@@ -91,7 +104,9 @@ def loads(string: str) -> list[GedcomStructure]:
             )
 
         level = int(match.group("level"))
-        tag = match.group("tag")
+        # A dataset repeats a few dozen tags across every line, so each line's
+        # tag shares one string object rather than holding its own copy.
+        tag = sys.intern(match.group("tag"))
         xref = match.group("xref")
         pointer = match.group("pointer")
         linestr = match.group("linestr")
@@ -187,19 +202,6 @@ def loads(string: str) -> list[GedcomStructure]:
             stack[level - 1].append_child(structure)
         stack.append(structure)
         continuable = structure
-
-        if pointer is not None and pointer != const.VOIDPTR:
-            pointers.append((pointer, number))
-
-    # Pointers may be forward references, so they are resolved once the whole
-    # data stream has been read.
-    for pointer, number in pointers:
-        if pointer not in xrefs:
-            raise GedcomParseError(
-                f"pointer {pointer} matches no cross-reference identifier in the "
-                "data stream",
-                line_number=number,
-            )
 
     if not records:
         raise GedcomParseError("a dataset must contain a header and a trailer")

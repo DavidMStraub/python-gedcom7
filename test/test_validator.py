@@ -1,6 +1,7 @@
 """Tests for reporting what is wrong with a dataset."""
 
 import pathlib
+from collections.abc import Callable
 
 import pytest
 
@@ -60,6 +61,70 @@ def test_void_pointer_is_not_dangling() -> None:
     """@VOID@ deliberately points at nothing."""
     records = dataset(individual(types.GedcomStructure(tag="FAMS", pointer="@VOID@")))
     assert gedcom7.validate(records) == []
+
+
+def _pointer_standard(pointer: str) -> types.GedcomStructure:
+    return individual(types.GedcomStructure(tag="FAMS", pointer=pointer))
+
+
+def _pointer_on_a_value(pointer: str) -> types.GedcomStructure:
+    return individual(types.GedcomStructure(tag="SEX", pointer=pointer))
+
+
+def _pointer_on_no_payload(pointer: str) -> types.GedcomStructure:
+    return individual(types.GedcomStructure(tag="BAPL", pointer=pointer))
+
+
+def _pointer_documented_extension(pointer: str) -> types.GedcomStructure:
+    return individual(types.GedcomStructure(tag=FOAF, pointer=pointer))
+
+
+def _pointer_undocumented_extension(pointer: str) -> types.GedcomStructure:
+    return individual(types.GedcomStructure(tag="_MINE", pointer=pointer))
+
+
+def _pointer_below_an_extension(pointer: str) -> types.GedcomStructure:
+    extension = types.GedcomStructure(tag="_MINE")
+    extension.append_child(types.GedcomStructure(tag="FAMS", pointer=pointer))
+    return individual(extension)
+
+
+def _pointer_misplaced_standard_tag(pointer: str) -> types.GedcomStructure:
+    birth = types.GedcomStructure(tag="BIRT")
+    birth.append_child(types.GedcomStructure(tag="FAMS", pointer=pointer))
+    return individual(birth)
+
+
+def _pointer_on_a_record(pointer: str) -> types.GedcomStructure:
+    return types.GedcomStructure(tag="_REC", xref="@X1@", pointer=pointer)
+
+
+# Every place a pointer can sit, by what the tables know of its structure: a
+# pointer payload, a value payload, no payload, a documented or undocumented
+# extension, a standard tag with no standard type here, or a record.
+POINTER_HOLDERS = [
+    _pointer_standard,
+    _pointer_on_a_value,
+    _pointer_on_no_payload,
+    _pointer_documented_extension,
+    _pointer_undocumented_extension,
+    _pointer_below_an_extension,
+    _pointer_misplaced_standard_tag,
+    _pointer_on_a_record,
+]
+
+
+@pytest.mark.parametrize("holder", POINTER_HOLDERS)
+@pytest.mark.parametrize(
+    ("pointer", "dangles"), [("@F9@", True), ("@VOID@", False), ("@I1@", False)]
+)
+def test_dangling_pointer_is_reported_wherever_it_sits(
+    holder: Callable[[str], types.GedcomStructure], pointer: str, dangles: bool
+) -> None:
+    """loads keeps a pointer to a missing record, so validate must find every one."""
+    built = holder(pointer)
+    records = dataset(built) if built.tag == "INDI" else dataset(individual(), built)
+    assert ("dangling-pointer" in categories(records)) is dangles
 
 
 def test_pointer_at_the_wrong_record_type() -> None:
@@ -125,7 +190,7 @@ def test_text_where_a_pointer_belongs() -> None:
 
 
 def test_pointer_where_text_belongs() -> None:
-    records = dataset(individual(types.GedcomStructure(tag="SEX", pointer="@I2@")))
+    records = dataset(individual(types.GedcomStructure(tag="SEX", pointer="@I1@")))
     assert categories(records) == ["misplaced-payload"]
 
 

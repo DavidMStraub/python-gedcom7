@@ -1,7 +1,8 @@
 """Conformance tests against the FamilySearch GEDCOM 7 specification.
 
 Each test cites the requirement it covers. Cases that the specification
-prohibits must raise, not be silently skipped or reinterpreted.
+prohibits must raise, not be silently skipped or reinterpreted. The exception
+is a pointer to a missing record, which parses and is reported by ``validate``.
 """
 
 import pytest
@@ -185,10 +186,24 @@ def test_pointer_and_voidptr() -> None:
     assert indi.children[1].pointer == "@VOID@"
 
 
-def test_unresolved_pointer_rejected() -> None:
-    """A pointer must match an xref of a structure within the document."""
-    with pytest.raises(GedcomParseError, match="matches no cross-reference"):
-        parse("0 @I1@ INDI\n1 ALIA @I9@\n")
+def test_unresolved_pointers_parse_and_validate_reports_each() -> None:
+    """A pointer must match an xref of a structure within the document.
+
+    The parser keeps an unresolved pointer as written, and ``validate`` reports
+    every one, not only the first.
+    """
+    records = parse(
+        "0 @I1@ INDI\n1 ALIA @I9@\n1 FAMS @F9@\n1 FAMC @VOID@\n"
+        "0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I8@\n"
+    )
+    assert records[1].children[0].pointer == "@I9@"
+    assert records[1].children[1].pointer == "@F9@"
+    errors = [e for e in gedcom7.validate(records) if e.category == "dangling-pointer"]
+    assert [e.path for e in errors] == [
+        "@I1@ INDI > ALIA",
+        "@I1@ INDI > FAMS",
+        "@F1@ FAM > WIFE",
+    ]
 
 
 def test_forward_pointer_allowed() -> None:

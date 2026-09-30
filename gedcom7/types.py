@@ -8,7 +8,7 @@ from typing import Literal
 from . import cast, const
 
 
-@dataclass
+@dataclass(slots=True)
 class GedcomStructure:
     """Gedcom structure class."""
 

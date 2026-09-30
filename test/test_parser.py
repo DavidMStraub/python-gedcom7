@@ -1,6 +1,9 @@
+import itertools
 import pathlib
+import re
 
 import gedcom7
+from gedcom7.parser import _lines
 
 GEDCOM_MIN = """0 HEAD
 1 GEDC
@@ -103,3 +106,15 @@ def test_empty_line_value() -> None:
     assert file_struct.tag == "FILE"
     assert file_struct.text == ""
     assert file_struct.children[0].tag == "FORM"
+
+
+def test_lines_matches_splitting_on_every_eol() -> None:
+    """Every string over a character, CR and LF, up to seven long, splits into
+    the lines that splitting on EOL and dropping a final empty piece gives."""
+    for n in range(8):
+        for chars in itertools.product("a\r\n", repeat=n):
+            string = "".join(chars)
+            expected = re.split(r"\r\n|\r|\n", string)
+            if expected[-1] == "":
+                expected.pop()
+            assert list(_lines(string)) == expected, repr(string)
