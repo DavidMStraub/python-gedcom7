@@ -190,3 +190,29 @@ def test_writer_rejects_names_decoding_alike() -> None:
         gedcom7.dump_gedzip(
             dataset("a.jpg", "%61.jpg"), io.BytesIO(), {"a.jpg": b"1", "%61.jpg": b"2"}
         )
+
+
+def test_path_sources_keep_their_names(tmp_path: pathlib.Path) -> None:
+    on_disk = tmp_path / "x.jpg"
+    on_disk.write_bytes(b"1")
+    buffer = io.BytesIO()
+    gedcom7.dump_gedzip(
+        dataset("./a.jpg", "m//b.jpg"),
+        buffer,
+        {"./a.jpg": on_disk, "m//b.jpg": str(on_disk)},
+    )
+    with gedcom7.GedzipReader(buffer) as reader:
+        assert reader.missing() == []
+
+
+@pytest.mark.parametrize("extra", ["./gedcom.ged", ".//gedcom.ged"])
+def test_writer_rejects_dataset_name_in_disguise(extra: str) -> None:
+    with pytest.raises(GedcomSerializeError, match="gedcom.ged"):
+        gedcom7.dump_gedzip(dataset(), io.BytesIO(), {extra: b""})
+
+
+def test_writer_rejects_names_unzipping_alike() -> None:
+    with pytest.raises(GedcomSerializeError, match="same file a.jpg"):
+        gedcom7.dump_gedzip(
+            dataset("a.jpg", "./a.jpg"), io.BytesIO(), {"a.jpg": b"1", "./a.jpg": b"2"}
+        )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import re
 import shutil
 import zipfile
@@ -163,7 +164,9 @@ def _check_paths(
     for path, source in files.items():
         if not is_local_file(path) or not _URL_PATH.fullmatch(path):
             raise GedcomSerializeError(f"{path!r} is not a valid local file path")
-        name = entry_name(path)
+        # Unzipping drops "." and empty segments, so names differing only in
+        # those land on the same file.
+        name = posixpath.normpath(entry_name(path))
         if name == DATASET:
             raise GedcomSerializeError(f"a local file cannot be named {DATASET}")
         if source is not None:
@@ -177,11 +180,15 @@ def _check_paths(
 def _write_file(archive: zipfile.ZipFile, name: str, source: FileSource) -> None:
     if isinstance(source, bytes):
         archive.writestr(name, source)
-    elif isinstance(source, (str, os.PathLike)):
-        archive.write(source, name)
-    else:
-        with source() as src, archive.open(name, "w", force_zip64=True) as dst:
-            shutil.copyfileobj(src, dst)
+        return
+    # Not ZipFile.write, which would normalize the name.
+    with (
+        (
+            open(source, "rb") if isinstance(source, (str, os.PathLike)) else source()
+        ) as src,
+        archive.open(name, "w", force_zip64=True) as dst,
+    ):
+        shutil.copyfileobj(src, dst)
 
 
 def dump_gedzip(
