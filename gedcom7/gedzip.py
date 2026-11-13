@@ -32,6 +32,10 @@ _SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 _BANNED = re.compile(grammar.banned)
 # Characters a file path payload carries literally; anything else is escaped.
 _SAFE = "/!$&'()*+,;=@-._~"
+# A valid URL string: URL code points and percent escapes, no query or fragment.
+_URL_PATH = re.compile(
+    r"(?:[A-Za-z0-9!$&'()*+,\-./:;=@_~]|%[0-9A-Fa-f]{2}|[^\x00-\x7f])*"
+)
 
 
 def is_local_file(path: str) -> bool:
@@ -44,7 +48,7 @@ def is_local_file(path: str) -> bool:
         return False
     if name.startswith("/") or "\\" in name or _BANNED.search(name):
         return False
-    return all(segment not in ("", ".", "..") for segment in name.split("/"))
+    return ".." not in name.split("/")
 
 
 def entry_name(path: str) -> str:
@@ -145,16 +149,29 @@ class GedzipReader:
         self.close()
 
 
-def _check_paths(records: list[GedcomStructure], files: Mapping[str, object]) -> None:
+def _check_paths(
+    records: list[GedcomStructure], files: Mapping[str, FileSource | None]
+) -> None:
     for structure in file_structures(records):
         path = structure.text
         if is_local_file(path):
-            if entry_name(path) == DATASET:
-                raise GedcomSerializeError(f"a local file cannot be named {DATASET}")
             if path not in files:
                 raise GedcomSerializeError(f"no content given for local file {path}")
         elif path.lower().startswith("file:"):
             raise GedcomSerializeError(f"a GEDZIP cannot point at file URL {path}")
+    names: dict[str, str] = {}
+    for path, source in files.items():
+        if not is_local_file(path) or not _URL_PATH.fullmatch(path):
+            raise GedcomSerializeError(f"{path!r} is not a valid local file path")
+        name = entry_name(path)
+        if name == DATASET:
+            raise GedcomSerializeError(f"a local file cannot be named {DATASET}")
+        if source is not None:
+            if name in names:
+                raise GedcomSerializeError(
+                    f"{names[name]} and {path} name the same file {name}"
+                )
+            names[name] = path
 
 
 def _write_file(archive: zipfile.ZipFile, name: str, source: FileSource) -> None:
@@ -185,7 +202,8 @@ def dump_gedzip(
     most media is compressed already.
 
     Raises :class:`~gedcom7.exceptions.GedcomSerializeError` if a local file has
-    no content, is named ``gedcom.ged``, or a payload is a ``file:`` URL.
+    no content, is named ``gedcom.ged``, is not a valid URL string, or shares its
+    name with another, or if a payload is a ``file:`` URL.
     """
     records = list(records)
     _check_paths(records, files)

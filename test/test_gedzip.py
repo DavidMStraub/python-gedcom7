@@ -28,7 +28,14 @@ def dataset(*paths: str) -> list[types.GedcomStructure]:
 
 @pytest.mark.parametrize(
     "path",
-    ["photo.jpg", "media/photo.jpg", "media/a%20b.jpg", "média/ü.jpg"],
+    [
+        "photo.jpg",
+        "media/photo.jpg",
+        "media/a%20b.jpg",
+        "média/ü.jpg",
+        "./photo.jpg",
+        "media//photo.jpg",
+    ],
 )
 def test_local_file(path: str) -> None:
     assert gedzip.is_local_file(path)
@@ -47,7 +54,6 @@ def test_local_file(path: str) -> None:
         "media/a%5Cb.jpg",
         "a.jpg?x=1",
         "a.jpg#frag",
-        "media//a.jpg",
         "a%01.jpg",
     ],
 )
@@ -159,3 +165,28 @@ def test_writer_leaves_out_unavailable_file() -> None:
     )
     with gedcom7.GedzipReader(buffer) as reader:
         assert reader.missing() == ["b.jpg"]
+
+
+def test_writer_finds_dot_segments() -> None:
+    with pytest.raises(GedcomSerializeError, match="./a.jpg"):
+        gedcom7.dump_gedzip(dataset("./a.jpg"), io.BytesIO(), {})
+
+
+@pytest.mark.parametrize("path", ["a%ZZ.jpg", "a%.jpg", "a<1>.jpg", "a b.jpg"])
+def test_writer_rejects_invalid_url(path: str) -> None:
+    with pytest.raises(GedcomSerializeError, match="not a valid local file path"):
+        gedcom7.dump_gedzip(dataset(path), io.BytesIO(), {path: b""})
+
+
+def test_writer_rejects_extra_dataset_entry() -> None:
+    with pytest.raises(GedcomSerializeError, match="gedcom.ged"):
+        gedcom7.dump_gedzip(
+            dataset("a.jpg"), io.BytesIO(), {"a.jpg": b"", "gedcom.ged": b""}
+        )
+
+
+def test_writer_rejects_names_decoding_alike() -> None:
+    with pytest.raises(GedcomSerializeError, match="same file a.jpg"):
+        gedcom7.dump_gedzip(
+            dataset("a.jpg", "%61.jpg"), io.BytesIO(), {"a.jpg": b"1", "%61.jpg": b"2"}
+        )
