@@ -9,6 +9,7 @@ from .exceptions import (
     GedcomValidationError,
 )
 from .formatter import format_value, set_value
+from .gedzip import GedzipReader, dump_gedzip
 from .parser import load, loads
 from .serializer import dump, dumps, generate_schema
 from .validator import Error, validate
@@ -19,7 +20,9 @@ __all__ = [
     "GedcomSerializeError",
     "GedcomValidationError",
     "Error",
+    "GedzipReader",
     "dump",
+    "dump_gedzip",
     "dumps",
     "format_value",
     "generate_schema",
