@@ -33,6 +33,19 @@ Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer
 
 `loads` and `dumps` are the string equivalents. Non-conforming input raises `GedcomParseError`, a `ValueError` carrying `line_number`. A pointer to a record that does not exist is kept rather than rejected; `gedcom7.validate(records)` lists each one as a `dangling-pointer` error.
 
+### GEDZIP
+
+```python
+with gedcom7.GedzipReader("family.gdz") as archive:
+    records = archive.records
+    with archive.open("media/photo.jpg") as f:  # a FILE payload
+        data = f.read()
+
+gedcom7.dump_gedzip(records, "out.gdz", {"media/photo.jpg": data})
+```
+
+File content can be given as bytes, a path, or a function returning an open binary file. Where the files are stored is left to the caller.
+
 ## Development
 
 ```
