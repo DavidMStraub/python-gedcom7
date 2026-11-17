@@ -98,6 +98,20 @@ def test_error_reports_line_number() -> None:
     assert excinfo.value.line == "1 NOTE @invalid"
 
 
+@pytest.mark.parametrize(
+    ("body", "line_number"),
+    [
+        ("0 @i1@ INDI\n", 4),  # as a record's identifier
+        ("0 @I1@ INDI\n1 FAMC @f1@\n", 5),  # as a pointer
+    ],
+)
+def test_lower_case_xref_rejected_at_its_line(body: str, line_number: int) -> None:
+    """Xref = atsign 1*tagchar atsign, and tagchar admits no lower-case letter."""
+    with pytest.raises(GedcomParseError, match="malformed line") as excinfo:
+        parse(body)
+    assert excinfo.value.line_number == line_number
+
+
 def test_two_spaces_after_tag_is_payload() -> None:
     """If the tag is followed by 2 spaces, the second is part of the payload."""
     records = parse("0 @I1@ INDI\n1 NOTE  leading space kept\n")

@@ -222,8 +222,9 @@ def dumps(
     cannot be encoded as conforming lines. Pass ``validate=True`` to check the
     dataset first and raise
     :class:`~gedcom7.exceptions.GedcomValidationError`, whose ``errors`` holds
-    every problem :func:`~gedcom7.validator.validate` found, rather than only the
-    first one that stops a line being written.
+    every error :func:`~gedcom7.validator.validate` found, rather than only the
+    first one that stops a line being written. Findings that are only
+    recommendations do not stop the write.
     """
     if line_terminator not in ("\n", "\r\n", "\r"):
         raise GedcomSerializeError(
@@ -233,7 +234,7 @@ def dumps(
 
     records = list(records)
     if validate:
-        errors = _validate(records)
+        errors = [e for e in _validate(records) if e.severity == "error"]
         if errors:
             raise GedcomValidationError(errors)
     uris = _schema(records)

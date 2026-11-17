@@ -33,6 +33,8 @@ Each record is a `GedcomStructure` with a `tag`, an optional `xref` and `pointer
 
 `loads` and `dumps` are the string equivalents. Non-conforming input raises `GedcomParseError`, a `ValueError` carrying `line_number`. A pointer to a record that does not exist is kept rather than rejected; `gedcom7.validate(records)` lists each one as a `dangling-pointer` error.
 
+`validate` returns a list of `Error`, each with a `category`, a `message` and the `path` to the structure, such as `@I1@ INDI > BIRT > DATE`. An `Error` whose `severity` is `"recommendation"` breaks only a recommendation of the specification, so the dataset still conforms; `dumps(records, validate=True)` raises only for the others. An empty list does not prove a dataset conforms: cardinality and enumeration values are not checked, and substructures of extensions are left to the extension's own definition.
+
 ### GEDZIP
 
 ```python
