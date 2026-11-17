@@ -240,6 +240,16 @@ def test_malformed_payload() -> None:
     assert categories(dataset(individual(birth))) == ["malformed-payload"]
 
 
+def test_file_format_must_be_a_media_type() -> None:
+    """A bare extension such as ``png`` is not a media type."""
+    records = gedcom7.loads(
+        "0 HEAD\n1 GEDC\n2 VERS 7.0\n0 @O1@ OBJE\n1 FILE a.png\n2 FORM png\n0 TRLR\n"
+    )
+    (error,) = gedcom7.validate(records)
+    assert error.category == "malformed-payload"
+    assert error.path == "@O1@ OBJE > FILE > FORM"
+
+
 @pytest.mark.parametrize("text", ["32 JAN 2000", "0 JAN 2000", "30 FEB 2000"])
 def test_day_outside_the_month(text: str) -> None:
     """The grammar allows any digits for a day, so the range is checked here."""
@@ -289,16 +299,31 @@ def schema_dataset(*definitions: str) -> list[types.GedcomStructure]:
     return records
 
 
-def test_two_tags_for_one_uri() -> None:
-    """dumps would pick between them arbitrarily."""
+def test_two_tags_for_one_uri_is_a_recommendation() -> None:
+    """The specification says a schema should, not must, give a URI one tag."""
     records = schema_dataset(f"_ONE {FOAF}", f"_TWO {FOAF}")
-    assert categories(records) == ["schema-conflict"]
+    (error,) = gedcom7.validate(records)
+    assert error.category == "schema-conflict"
+    assert error.severity == "recommendation"
+    assert error.path == "HEAD > SCHMA > TAG"
 
 
-def test_two_uris_for_one_tag() -> None:
-    """The parser refuses to resolve such a tag at all."""
+def test_dumps_validate_writes_past_a_recommendation() -> None:
+    """A dataset whose only findings are recommendations still conforms."""
+    records = schema_dataset(f"_ONE {FOAF}", f"_TWO {FOAF}")
+    assert "1 _ONE x" in gedcom7.dumps(records, validate=True)
+
+
+def test_two_uris_for_one_tag_is_not_reported() -> None:
+    """The specification permits reusing a tag for concepts that never meet."""
     records = schema_dataset(f"_SAME {FOAF}", "_SAME http://example.com/other")
-    assert "schema-conflict" in categories(records)
+    assert gedcom7.validate(records) == []
+
+
+def test_findings_are_errors_by_default() -> None:
+    records = dataset(individual(types.GedcomStructure(tag="FAMS", pointer="@F9@")))
+    (error,) = gedcom7.validate(records)
+    assert error.severity == "error"
 
 
 def test_undeclared_extension_tag() -> None:

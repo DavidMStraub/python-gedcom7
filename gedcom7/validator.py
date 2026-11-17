@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from . import cast, const, grammar, types
 
@@ -34,7 +34,12 @@ _MONTH_CALENDARS = (None, "GREGORIAN", "JULIAN")
 
 @dataclass
 class Error:
-    """One problem, and the path through the tree to where it was found."""
+    """One problem, and the path through the tree to where it was found.
+
+    ``severity`` is ``"error"`` when the specification requires what was broken,
+    and ``"recommendation"`` when it only recommends it: a dataset whose problems
+    are all recommendations still conforms.
+    """
 
     category: str
     message: str
@@ -42,6 +47,7 @@ class Error:
     structure: types.GedcomStructure | None = field(
         default=None, repr=False, compare=False
     )
+    severity: Literal["error", "recommendation"] = "error"
 
 
 def validate(records: Iterable[types.GedcomStructure]) -> list[Error]:
@@ -54,7 +60,8 @@ def validate(records: Iterable[types.GedcomStructure]) -> list[Error]:
 
     An empty list means the dataset passes the checks this can make; it does not
     mean the dataset conforms, since cardinality and enumeration values are not
-    checked. See :mod:`gedcom7.validator` for what that leaves out.
+    checked. See :mod:`gedcom7.validator` for what that leaves out. Entries whose
+    ``severity`` is ``"recommendation"`` do not make the dataset non-conforming.
     """
     records = list(records)
     errors: list[Error] = []
@@ -77,9 +84,13 @@ def _path(structure: types.GedcomStructure) -> str:
 
 
 def _report(
-    errors: list[Error], category: str, message: str, structure: types.GedcomStructure
+    errors: list[Error],
+    category: str,
+    message: str,
+    structure: types.GedcomStructure,
+    severity: Literal["error", "recommendation"] = "error",
 ) -> None:
-    errors.append(Error(category, message, _path(structure), structure))
+    errors.append(Error(category, message, _path(structure), structure, severity))
 
 
 def _check_dataset(records: list[types.GedcomStructure], errors: list[Error]) -> None:
@@ -135,9 +146,15 @@ def _check_dataset(records: list[types.GedcomStructure], errors: list[Error]) ->
 def _check_schema(
     records: list[types.GedcomStructure], errors: list[Error]
 ) -> set[str]:
-    """Check that the header maps each tag to one URI and back, and list the URIs."""
+    """Report header tag definitions that share a URI, and list the declared URIs.
+
+    One tag defined with several URIs is not reported. The specification allows
+    it where those URIs' concepts cannot appear in the same place, which only the
+    extensions' own documentation can tell, while also listing a unique extension
+    tag per tag definition among its requirements; the specific permission, which
+    comes with a worked example, is taken to govern.
+    """
     by_uri: dict[str, set[str]] = {}
-    by_tag: dict[str, set[str]] = {}
     origin: dict[str, types.GedcomStructure] = {}
     for record in records:
         if record.tag != const.HEAD:
@@ -159,27 +176,17 @@ def _check_schema(
                     continue
                 tag, uri = match.group("exttag"), match.group("uri")
                 by_uri.setdefault(uri, set()).add(tag)
-                by_tag.setdefault(tag, set()).add(uri)
                 origin.setdefault(uri, definition)
-                origin.setdefault(tag, definition)
 
     for uri, tags in by_uri.items():
         if len(tags) > 1:
             _report(
                 errors,
                 "schema-conflict",
-                f"{uri} is abbreviated by {' and '.join(sorted(tags))}, so "
-                "which one is written is arbitrary",
+                f"{uri} is abbreviated by {' and '.join(sorted(tags))}; these "
+                "tags mean the same thing, and a schema should give a URI only one",
                 origin[uri],
-            )
-    for tag, uris in by_tag.items():
-        if len(uris) > 1:
-            _report(
-                errors,
-                "schema-conflict",
-                f"{tag} stands for {' and '.join(sorted(uris))}, so it resolves "
-                "to neither when read back",
-                origin[tag],
+                severity="recommendation",
             )
     return set(by_uri)
 
